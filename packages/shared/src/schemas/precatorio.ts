@@ -1,10 +1,5 @@
 import { z } from 'zod';
-import {
-  EstagioPrecatorio,
-  NaturezaPrecatorio,
-  TipoPrecatorio,
-  UF_BRASIL,
-} from '../enums';
+import { EstagioPrecatorio, NaturezaPrecatorio, TipoPrecatorio, UF_BRASIL } from '../enums';
 
 const naturezaValues = [
   NaturezaPrecatorio.FEDERAL,
@@ -60,14 +55,10 @@ export const precatorioCreateSchema = z
 
     parceiroId: z.string().uuid().optional().nullable(),
   })
-  .refine(
-    (data) =>
-      data.devedorTipo !== NaturezaPrecatorio.ESTADUAL || !!data.devedorUf,
-    {
-      message: 'UF é obrigatória para precatórios estaduais',
-      path: ['devedorUf'],
-    },
-  )
+  .refine((data) => data.devedorTipo !== NaturezaPrecatorio.ESTADUAL || !!data.devedorUf, {
+    message: 'UF é obrigatória para precatórios estaduais',
+    path: ['devedorUf'],
+  })
   .refine(
     (data) =>
       data.devedorTipo !== NaturezaPrecatorio.MUNICIPAL ||

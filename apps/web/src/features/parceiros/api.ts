@@ -1,5 +1,5 @@
-import type { ParceiroCreateInput, ParceiroUpdateInput } from '@preca/shared';
 import { apiClient } from '@/lib/api-client';
+import type { ParceiroCreateInput, ParceiroUpdateInput } from '@preca/shared';
 import type { Parceiro } from './types';
 
 export const parceirosApi = {

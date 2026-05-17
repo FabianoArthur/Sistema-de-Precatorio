@@ -12,7 +12,14 @@ export const compradorCreateSchema = z.object({
   ufsAceitas: z.array(z.enum(UF_BRASIL)).default([]),
   municipiosAceitos: z.array(z.string()).default([]),
   scoresAceitos: z
-    .array(z.enum([ScorePrecatorio.MEDIO, ScorePrecatorio.AA, ScorePrecatorio.AAA, ScorePrecatorio.URGENTE]))
+    .array(
+      z.enum([
+        ScorePrecatorio.MEDIO,
+        ScorePrecatorio.AA,
+        ScorePrecatorio.AAA,
+        ScorePrecatorio.URGENTE,
+      ]),
+    )
     .default([]),
 });
 export type CompradorCreateInput = z.infer<typeof compradorCreateSchema>;

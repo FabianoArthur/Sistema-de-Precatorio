@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { CedentesModule } from './modules/cedentes/cedentes.module';
-import { ParceirosModule } from './modules/parceiros/parceiros.module';
-import { CompradoresModule } from './modules/compradores/compradores.module';
-import { PrecatoriosModule } from './modules/precatorios/precatorios.module';
 import { AnexosModule } from './modules/anexos/anexos.module';
-import { CotacoesModule } from './modules/cotacoes/cotacoes.module';
-import { NegociacoesModule } from './modules/negociacoes/negociacoes.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
-import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CedentesModule } from './modules/cedentes/cedentes.module';
+import { CompradoresModule } from './modules/compradores/compradores.module';
+import { CotacoesModule } from './modules/cotacoes/cotacoes.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { NegociacoesModule } from './modules/negociacoes/negociacoes.module';
+import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
+import { ParceirosModule } from './modules/parceiros/parceiros.module';
+import { PrecatoriosModule } from './modules/precatorios/precatorios.module';
+import { UsersModule } from './modules/users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [

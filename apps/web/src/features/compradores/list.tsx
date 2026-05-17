@@ -1,6 +1,3 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { SCORE_LABELS } from '@preca/shared';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -10,6 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SCORE_LABELS } from '@preca/shared';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCompradores, useDeleteComprador } from './hooks';
 
 export function CompradoresListPage() {
@@ -58,7 +58,8 @@ export function CompradoresListPage() {
               const aceita: string[] = [];
               if (c.aceitaFederal) aceita.push('Federal');
               if (c.ufsAceitas.length) aceita.push(`Est: ${c.ufsAceitas.join(', ')}`);
-              if (c.municipiosAceitos.length) aceita.push(`${c.municipiosAceitos.length} municípios`);
+              if (c.municipiosAceitos.length)
+                aceita.push(`${c.municipiosAceitos.length} municípios`);
               return (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.nome}</TableCell>

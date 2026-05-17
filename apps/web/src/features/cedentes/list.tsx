@@ -1,5 +1,3 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -9,6 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCedentes, useDeleteCedente } from './hooks';
 
 export function CedentesListPage() {

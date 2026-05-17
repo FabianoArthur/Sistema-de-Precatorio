@@ -15,13 +15,13 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   type CompradorCreateInput,
-  compradorCreateSchema,
   type CompradorUpdateInput,
+  compradorCreateSchema,
   compradorUpdateSchema,
 } from '@preca/shared';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser, type CurrentUserPayload } from '../auth/current-user.decorator';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { CurrentUser, type CurrentUserPayload } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompradoresService } from './compradores.service';
 
 @ApiTags('compradores')

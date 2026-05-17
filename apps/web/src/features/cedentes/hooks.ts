@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CedenteCreateInput, CedenteUpdateInput } from '@preca/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cedentesApi } from './api';
 
 const KEY = ['cedentes'] as const;

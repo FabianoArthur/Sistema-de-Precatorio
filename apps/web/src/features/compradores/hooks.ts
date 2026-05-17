@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CompradorCreateInput, CompradorUpdateInput } from '@preca/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { compradoresApi } from './api';
 
 const KEY = ['compradores'] as const;

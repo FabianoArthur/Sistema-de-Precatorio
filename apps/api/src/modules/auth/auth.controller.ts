@@ -1,10 +1,19 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { type LoginInput, loginSchema } from '@preca/shared';
-import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { CurrentUser, type CurrentUserPayload } from './current-user.decorator';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
+import { AuthService } from './auth.service';
+import { CurrentUser, type CurrentUserPayload } from './current-user.decorator';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')

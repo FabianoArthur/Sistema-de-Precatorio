@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ParceiroCreateInput, ParceiroUpdateInput } from '@preca/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { parceirosApi } from './api';
 
 const KEY = ['parceiros'] as const;

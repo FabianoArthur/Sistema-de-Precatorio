@@ -1,5 +1,5 @@
-import type { CompradorCreateInput, CompradorUpdateInput } from '@preca/shared';
 import { apiClient } from '@/lib/api-client';
+import type { CompradorCreateInput, CompradorUpdateInput } from '@preca/shared';
 import type { Comprador } from './types';
 
 export const compradoresApi = {

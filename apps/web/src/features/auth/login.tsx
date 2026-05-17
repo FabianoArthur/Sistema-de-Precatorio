@@ -1,9 +1,9 @@
+import { useAuth } from '@/contexts/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { type LoginInput, loginSchema } from '@preca/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { type LoginInput, loginSchema } from '@preca/shared';
-import { useAuth } from '@/contexts/auth-context';
 
 export function LoginPage() {
   const { login } = useAuth();
