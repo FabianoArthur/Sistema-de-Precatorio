@@ -1,26 +1,14 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import {
-  Building2,
-  LayoutDashboard,
-  LogOut,
-  Moon,
-  Sun,
-  Users,
-  Wallet,
-  Handshake,
-  ScrollText,
-} from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
 import { cn } from '@/lib/utils';
+import { Building2, Handshake, LayoutDashboard, LogOut, Moon, ScrollText, Sun } from 'lucide-react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/precatorios', label: 'Precatórios', icon: ScrollText },
-  { to: '/cedentes', label: 'Cedentes', icon: Users },
   { to: '/compradores', label: 'Compradores', icon: Building2 },
   { to: '/parceiros', label: 'Parceiros', icon: Handshake },
-  { to: '/cotacoes', label: 'Cotações', icon: Wallet },
 ];
 
 export function AppLayout() {

@@ -11,18 +11,16 @@
     "isolatedModules": false,
     "verbatimModuleSyntax": false,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     "strictNullChecks": true,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@preca/shared": ["../../packages/shared/src"],
-      "@preca/shared/*": ["../../packages/shared/src/*"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "prisma/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]
 }
