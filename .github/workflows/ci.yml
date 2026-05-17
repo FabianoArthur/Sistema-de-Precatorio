@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: preca
+          POSTGRES_PASSWORD: preca_dev
+          POSTGRES_DB: preca_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://preca:preca_dev@localhost:5432/preca_dev?schema=public
+      JWT_SECRET: ci-only-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm turbo run type-check
+
+      - name: Prisma generate
+        run: pnpm --filter @preca/api prisma:generate
+
+      - name: Prisma migrate
+        run: pnpm --filter @preca/api prisma migrate deploy
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test

@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+.next/
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Editor
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Cache
+.cache/
+.eslintcache
+
+# Sentry
+.sentryclirc
+
+# Prisma
+apps/api/prisma/migrations/dev.db*
+
+# Uploads (dev local apenas)
+apps/api/uploads/
+
+# Storybook
+storybook-static/
+
+# Playwright
+test-results/
+playwright-report/
+.playwright/

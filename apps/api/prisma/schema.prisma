@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum EstagioPrecatorio {
+  NOVOS_RECEBIMENTOS
+  TRIAGEM
+  ENVIADO_COTACAO
+  AGUARDANDO_BANCOS
+  NEGOCIACAO_CEDENTE
+  DOCUMENTACAO
+  DILIGENCIA
+  ESCRITURA_ASSINATURA
+  CONCLUIDO
+  PERDIDOS_ARQUIVADOS
+  FOLLOW_UP
+}
+
+enum NaturezaPrecatorio {
+  FEDERAL
+  ESTADUAL
+  MUNICIPAL
+}
+
+enum TipoPrecatorio {
+  HONORARIOS
+  ALIMENTAR
+  COMUM
+  DESAPROPRIACAO
+  ANISTIA_POLITICA
+}
+
+enum ScorePrecatorio {
+  MEDIO
+  AA
+  AAA
+  URGENTE
+}
+
+enum StatusCotacao {
+  PENDENTE
+  RECEBIDA
+  RECUSADA
+}
+
+enum OcrStatus {
+  NAO_PROCESSADO
+  PROCESSANDO
+  EXTRAIDO
+  FALHOU
+}
+
+enum OrigemNegociacao {
+  NOSSA
+  CEDENTE
+}
+
+enum AcaoAudit {
+  CREATE
+  UPDATE
+  DELETE
+  MUDANCA_ESTAGIO
+}
+
+// ============================================================================
+// USERS & AUTH
+// ============================================================================
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  senhaHash String
+  nome      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs        AuditLog[]
+  historicoEstagio HistoricoEstagio[]
+  negociacoes      Negociacao[]
+  anexos           Anexo[]
+  notificacoes     Notificacao[]
+
+  @@map("users")
+}
+
+// ============================================================================
+// MÓDULOS DE CADASTRO
+// ============================================================================
+
+model Cedente {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String
+  documento String?
+  contato   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  precatorios Precatorio[]
+
+  @@map("cedentes")
+}
+
+model Parceiro {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String
+  chavePix  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  precatorios Precatorio[]
+
+  @@map("parceiros")
+}
+
+model Comprador {
+  id                String            @id @default(uuid()) @db.Uuid
+  nome              String
+  cnpj              String            @unique
+  celular           String
+  email             String
+  aceitaFederal     Boolean           @default(false)
+  ufsAceitas        String[]          @default([])
+  municipiosAceitos String[]          @default([])
+  scoresAceitos     ScorePrecatorio[] @default([])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  cotacoes Cotacao[]
+
+  @@map("compradores")
+}
+
+// ============================================================================
+// PRECATÓRIO - ENTIDADE CENTRAL
+// ============================================================================
+
+model Precatorio {
+  id String @id @default(uuid()) @db.Uuid
+
+  numeroPrecatorio String?
+  numeroProcesso   String?
+
+  cedenteId String  @db.Uuid
+  cedente   Cedente @relation(fields: [cedenteId], references: [id], onDelete: Restrict)
+
+  escritorioAdvogado String?
+
+  // Devedor (natureza tipada com UF/município condicionais)
+  devedorTipo      NaturezaPrecatorio
+  devedorUf        String?
+  devedorMunicipio String?
+
+  tipo TipoPrecatorio
+
+  // Valores monetários (em centavos para evitar problemas de precisão decimal? Não — Prisma Decimal já resolve)
+  valorOriginal   Decimal  @db.Decimal(15, 2)
+  valorAtualizado Decimal? @db.Decimal(15, 2)
+  desagio         Decimal? @db.Decimal(15, 2)
+  valorLiquido    Decimal? @db.Decimal(15, 2)
+
+  // Score (derivado mas armazenado para queries/filtros rápidos)
+  score ScorePrecatorio
+
+  tribunal       String?
+  vara           String?
+  dataExpedicao  DateTime?
+  dataRequisicao DateTime?
+  prazoEstimado  DateTime?
+
+  // Comissão (preenchida pós-cotação)
+  parceiroId       String?   @db.Uuid
+  parceiro         Parceiro? @relation(fields: [parceiroId], references: [id], onDelete: SetNull)
+  comissaoTotal    Decimal?  @db.Decimal(15, 2)
+  comissaoParceiro Decimal?  @db.Decimal(15, 2)
+
+  // Fluxo
+  estagioAtual EstagioPrecatorio @default(NOVOS_RECEBIMENTOS)
+  estagioDesde DateTime          @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  anexos      Anexo[]
+  cotacoes    Cotacao[]
+  negociacoes Negociacao[]
+  historico   HistoricoEstagio[]
+
+  @@index([estagioAtual])
+  @@index([cedenteId])
+  @@index([devedorTipo, devedorUf])
+  @@index([score])
+  @@map("precatorios")
+}
+
+// ============================================================================
+// ANEXOS (PDFs)
+// ============================================================================
+
+model Anexo {
+  id             String    @id @default(uuid()) @db.Uuid
+  precatorioId   String    @db.Uuid
+  precatorio     Precatorio @relation(fields: [precatorioId], references: [id], onDelete: Cascade)
+  nome           String
+  url            String
+  contentType    String
+  tamanho        Int
+  ocrStatus      OcrStatus @default(NAO_PROCESSADO)
+  dadosExtraidos Json?
+  createdAt      DateTime  @default(now())
+
+  createdById String @db.Uuid
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@index([precatorioId])
+  @@map("anexos")
+}
+
+// ============================================================================
+// COTAÇÕES
+// ============================================================================
+
+model Cotacao {
+  id           String        @id @default(uuid()) @db.Uuid
+  precatorioId String        @db.Uuid
+  precatorio   Precatorio    @relation(fields: [precatorioId], references: [id], onDelete: Cascade)
+  compradorId  String        @db.Uuid
+  comprador    Comprador     @relation(fields: [compradorId], references: [id], onDelete: Restrict)
+  status       StatusCotacao @default(PENDENTE)
+  valorBruto   Decimal?      @db.Decimal(15, 2)
+  comissao     Decimal?      @db.Decimal(15, 2)
+  observacao   String?
+  dataEnvio    DateTime      @default(now())
+  dataResposta DateTime?
+
+  @@unique([precatorioId, compradorId])
+  @@index([precatorioId])
+  @@index([status])
+  @@map("cotacoes")
+}
+
+// ============================================================================
+// NEGOCIAÇÃO (propostas/contrapropostas)
+// ============================================================================
+
+model Negociacao {
+  id           String           @id @default(uuid()) @db.Uuid
+  precatorioId String           @db.Uuid
+  precatorio   Precatorio       @relation(fields: [precatorioId], references: [id], onDelete: Cascade)
+  origem       OrigemNegociacao
+  valor        Decimal          @db.Decimal(15, 2)
+  observacao   String?
+  createdAt    DateTime         @default(now())
+  createdById  String           @db.Uuid
+  createdBy    User             @relation(fields: [createdById], references: [id])
+
+  @@index([precatorioId, createdAt])
+  @@map("negociacoes")
+}
+
+// ============================================================================
+// HISTÓRICO DE ESTÁGIO
+// ============================================================================
+
+model HistoricoEstagio {
+  id              String             @id @default(uuid()) @db.Uuid
+  precatorioId    String             @db.Uuid
+  precatorio      Precatorio         @relation(fields: [precatorioId], references: [id], onDelete: Cascade)
+  estagioAnterior EstagioPrecatorio?
+  estagioNovo     EstagioPrecatorio
+  observacao      String?
+  userId          String             @db.Uuid
+  user            User               @relation(fields: [userId], references: [id])
+  createdAt       DateTime           @default(now())
+
+  @@index([precatorioId, createdAt])
+  @@map("historico_estagio")
+}
+
+// ============================================================================
+// AUDIT LOG (genérico)
+// ============================================================================
+
+model AuditLog {
+  id         String    @id @default(uuid()) @db.Uuid
+  entidade   String
+  entidadeId String
+  acao       AcaoAudit
+  antes      Json?
+  depois     Json?
+  userId     String    @db.Uuid
+  user       User      @relation(fields: [userId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([userId, createdAt])
+  @@map("audit_log")
+}
+
+// ============================================================================
+// NOTIFICAÇÕES IN-APP
+// ============================================================================
+
+model Notificacao {
+  id        String   @id @default(uuid()) @db.Uuid
+  tipo      String
+  mensagem  String
+  link      String?
+  lida      Boolean  @default(false)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId, lida, createdAt])
+  @@map("notificacoes")
+}
