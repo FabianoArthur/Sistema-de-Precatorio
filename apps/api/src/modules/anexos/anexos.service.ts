@@ -214,6 +214,10 @@ export class AnexosService {
         return { vara: String(valor) };
       case 'dataExpedicao':
         return { dataExpedicao: new Date(String(valor)) };
+      default: {
+        const _exhaustive: never = campo;
+        throw new BadRequestException(`Campo não suportado: ${_exhaustive}`);
+      }
     }
   }
 
@@ -230,6 +234,8 @@ export class AnexosService {
   private async processarAnexo(anexoId: string, hint?: 'FEDERAL' | 'ESTADUAL' | 'MUNICIPAL') {
     const anexo = await this.prisma.anexo.findUnique({ where: { id: anexoId } });
     if (!anexo) return;
+
+    this.logger.log(`OCR iniciado para anexo ${anexoId} (hint=${hint ?? 'nenhum'})`);
 
     await this.prisma.anexo.update({
       where: { id: anexoId },
@@ -250,6 +256,20 @@ export class AnexosService {
       });
       this.logger.log(`OCR ${status} para anexo ${anexoId} (parser=${dados.parsedBy ?? 'nenhum'})`);
 
+      await this.prisma.auditLog.create({
+        data: {
+          entidade: 'anexo',
+          entidadeId: anexoId,
+          acao: AcaoAudit.UPDATE,
+          antes: { ocrStatus: OcrStatus.PROCESSANDO } as Prisma.InputJsonValue,
+          depois: {
+            ocrStatus: status,
+            parsedBy: dados.parsedBy,
+          } as Prisma.InputJsonValue,
+          userId: anexo.createdById,
+        },
+      });
+
       const tipo =
         status === OcrStatus.EXTRAIDO
           ? TipoNotificacao.ANEXO_OCR_EXTRAIDO
@@ -265,6 +285,7 @@ export class AnexosService {
         excetoUserId: anexo.createdById,
       });
     } catch (err) {
+      this.logger.error(`OCR falhou para anexo ${anexoId}: ${(err as Error).message}`);
       await this.prisma.anexo.update({
         where: { id: anexoId },
         data: {
@@ -272,6 +293,19 @@ export class AnexosService {
           dadosExtraidos: {
             erro: (err as Error).message,
           } as unknown as Prisma.InputJsonValue,
+        },
+      });
+      await this.prisma.auditLog.create({
+        data: {
+          entidade: 'anexo',
+          entidadeId: anexoId,
+          acao: AcaoAudit.UPDATE,
+          antes: { ocrStatus: OcrStatus.PROCESSANDO } as Prisma.InputJsonValue,
+          depois: {
+            ocrStatus: OcrStatus.FALHOU,
+            erro: (err as Error).message,
+          } as Prisma.InputJsonValue,
+          userId: anexo.createdById,
         },
       });
       await this.notificacoes.criarParaTodos({

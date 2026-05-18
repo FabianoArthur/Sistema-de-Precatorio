@@ -41,11 +41,16 @@ export interface MatchInfo {
   motivos: MotivoMatch[];
 }
 
-export const cotacaoResponderSchema = z.object({
-  valorBruto: z.number().positive('Valor bruto deve ser positivo'),
-  comissao: z.number().nonnegative().default(0),
-  observacao: z.string().optional().nullable(),
-});
+export const cotacaoResponderSchema = z
+  .object({
+    valorBruto: z.number().positive('Valor bruto deve ser positivo'),
+    comissao: z.number().nonnegative().default(0),
+    observacao: z.string().optional().nullable(),
+  })
+  .refine((data) => data.comissao <= data.valorBruto, {
+    message: 'Comissão não pode ser maior que o valor bruto.',
+    path: ['comissao'],
+  });
 export type CotacaoResponderInput = z.infer<typeof cotacaoResponderSchema>;
 
 export const cotacaoRecusarSchema = z.object({

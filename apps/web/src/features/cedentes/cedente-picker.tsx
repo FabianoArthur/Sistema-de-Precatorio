@@ -8,6 +8,7 @@ import { type CedenteCreateInput, cedenteCreateSchema } from '@preca/shared';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { useCedentes, useCreateCedente } from './hooks';
 
 interface CedentePickerProps {
@@ -39,7 +40,7 @@ export function CedentePicker({ value, onChange, error }: CedentePickerProps) {
       setOpen(false);
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao criar cedente');
+      toast.error(msg ?? 'Falha ao criar cedente');
     }
   }
 

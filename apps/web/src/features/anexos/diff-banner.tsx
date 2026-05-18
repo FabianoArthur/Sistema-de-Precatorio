@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { formatBRL, formatDate } from '@/lib/format';
 import type { CampoAplicavel } from '@preca/shared';
 import { AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import type { PrecatorioDetail } from '../precatorios/types';
 import { type Divergencia, computarDivergencias } from './diff';
 import { useAplicarValor } from './hooks';
@@ -41,7 +42,7 @@ export function DiffBanner({ precatorio, anexos }: DiffBannerProps) {
       });
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao aplicar valor');
+      toast.error(msg ?? 'Falha ao aplicar valor');
     }
   }
 

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { type DragEvent, useId, useState } from 'react';
+import { toast } from 'sonner';
 import { useUploadAnexo } from './hooks';
 
 interface UploadZoneProps {
@@ -16,14 +17,14 @@ export function UploadZone({ precatorioId }: UploadZoneProps) {
     if (!files || files.length === 0) return;
     for (const file of Array.from(files)) {
       if (file.type !== 'application/pdf') {
-        window.alert(`"${file.name}" não é PDF — ignorado.`);
+        toast.error(`"${file.name}" não é PDF — ignorado.`);
         continue;
       }
       try {
         await upload.mutateAsync(file);
       } catch (e) {
         const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        window.alert(`Falha ao enviar "${file.name}": ${msg ?? 'erro desconhecido'}`);
+        toast.error(`Falha ao enviar "${file.name}": ${msg ?? 'erro desconhecido'}`);
       }
     }
   }

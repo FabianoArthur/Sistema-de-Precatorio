@@ -1,10 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { confirmAction } from '@/components/ui/confirm';
 import { formatBRL, formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { type OrigemNegociacao } from '@preca/shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useDeleteNegociacao } from './hooks';
 import { NovaPropostaDialog } from './nova-proposta-dialog';
 import type { NegociacaoSummary } from './types';
@@ -28,14 +30,21 @@ export function NegociacoesTab({ precatorioId, negociacoes }: NegociacoesTabProp
   const [novaOpen, setNovaOpen] = useState(false);
   const deleteNeg = useDeleteNegociacao(precatorioId);
 
-  async function onDelete(n: NegociacaoSummary) {
-    if (!window.confirm(`Excluir proposta de ${formatBRL(n.valor)}?`)) return;
-    try {
-      await deleteNeg.mutateAsync(n.id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(n: NegociacaoSummary) {
+    confirmAction({
+      title: `Excluir proposta de ${formatBRL(n.valor)}?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await deleteNeg.mutateAsync(n.id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   const ordenadas = [...negociacoes].sort(

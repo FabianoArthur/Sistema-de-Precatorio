@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { confirmAction } from '@/components/ui/confirm';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import {
@@ -27,6 +28,7 @@ import {
 import { Eye, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useDeletePrecatorio, usePrecatorios } from './hooks';
 
 export function PrecatoriosListPage() {
@@ -58,14 +60,21 @@ export function PrecatoriosListPage() {
 
   const hasFilters = Object.values(filters).some((v) => v && v !== '');
 
-  async function onDelete(id: string, label: string) {
-    if (!window.confirm(`Excluir precatório "${label}"?`)) return;
-    try {
-      await remove.mutateAsync(id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(id: string, label: string) {
+    confirmAction({
+      title: `Excluir precatório "${label}"?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await remove.mutateAsync(id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   function clearFilters() {

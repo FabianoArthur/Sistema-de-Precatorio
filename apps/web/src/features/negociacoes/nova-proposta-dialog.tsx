@@ -11,6 +11,7 @@ import {
   negociacaoCreateSchema,
 } from '@preca/shared';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { useCreateNegociacao } from './hooks';
 
 interface NovaPropostaDialogProps {
@@ -38,7 +39,7 @@ export function NovaPropostaDialog({ open, onClose, precatorioId }: NovaProposta
       onClose();
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao registrar negociação');
+      toast.error(msg ?? 'Falha ao registrar negociação');
     }
   }
 

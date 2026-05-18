@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type CotacaoResponderInput, cotacaoResponderSchema } from '@preca/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { useResponderCotacao } from './hooks';
 import type { CotacaoSummary } from './types';
 
@@ -51,7 +52,7 @@ export function ResponderCotacaoDialog({
       onClose();
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao responder cotação');
+      toast.error(msg ?? 'Falha ao responder cotação');
     }
   }
 

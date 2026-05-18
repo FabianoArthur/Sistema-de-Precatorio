@@ -27,6 +27,7 @@ export interface ResultadoBloqueado {
 
 const PONTOS_ESPECIFICO = 30;
 const PONTOS_QUALQUER = 10;
+const BONUS_FEDERAL = 10; // Federal tem maior prioridade por ser receita garantida
 
 function motivo(tipo: MotivoTipo, label: string, detalhe?: string): MotivoMatch {
   return { tipo, label, detalhe };
@@ -73,7 +74,7 @@ export function avaliarMatch(
   if (precatorio.devedorTipo === 'FEDERAL') {
     if (comprador.aceitaFederal) {
       motivos.push(motivo(MOTIVO_TIPO.FEDERAL_OK, 'Federal', 'aceita precatórios federais'));
-      pontuacao += PONTOS_ESPECIFICO + 10;
+      pontuacao += PONTOS_ESPECIFICO + BONUS_FEDERAL;
     } else {
       bloqueios.push(bloqueio(BLOQUEIO_TIPO.FEDERAL_NAO_ACEITO, 'Não aceita Federal'));
     }
@@ -98,7 +99,8 @@ export function avaliarMatch(
     const uf = precatorio.devedorUf;
     const municipio = precatorio.devedorMunicipio;
 
-    // UF check
+    // UF check — se bloquear, NÃO checa município (evita bloqueios redundantes)
+    let ufBloqueada = false;
     if (comprador.ufsAceitas.length === 0) {
       motivos.push(motivo(MOTIVO_TIPO.UF_QUALQUER, 'Municipal', 'aceita qualquer UF'));
       pontuacao += PONTOS_QUALQUER;
@@ -113,28 +115,34 @@ export function avaliarMatch(
           `Aceita: ${comprador.ufsAceitas.join(', ')}`,
         ),
       );
+      ufBloqueada = true;
     }
 
-    // Município check (só se UF não bloqueou)
-    if (comprador.municipiosAceitos.length === 0) {
-      motivos.push(
-        motivo(MOTIVO_TIPO.MUNICIPIO_QUALQUER, 'Município', 'aceita qualquer município'),
-      );
-      pontuacao += PONTOS_QUALQUER;
-    } else if (municipio) {
-      const alvo = municipio.toLowerCase().trim();
-      const aceita = comprador.municipiosAceitos.some((m) => m.toLowerCase().trim() === alvo);
-      if (aceita) {
-        motivos.push(motivo(MOTIVO_TIPO.MUNICIPIO_ACEITO, `${municipio}`, 'aceita explicitamente'));
-        pontuacao += PONTOS_ESPECIFICO;
-      } else {
-        bloqueios.push(
-          bloqueio(
-            BLOQUEIO_TIPO.MUNICIPIO_NAO_ACEITO,
-            `Não aceita ${municipio}`,
-            `Aceita: ${comprador.municipiosAceitos.slice(0, 3).join(', ')}${comprador.municipiosAceitos.length > 3 ? '…' : ''}`,
-          ),
+    // Município check — só executa se UF passou. Quando ambos (UF e município) estão
+    // vazios no comprador, ele aceita qualquer localidade: soma PONTOS_QUALQUER + PONTOS_QUALQUER = 20.
+    if (!ufBloqueada) {
+      if (comprador.municipiosAceitos.length === 0) {
+        motivos.push(
+          motivo(MOTIVO_TIPO.MUNICIPIO_QUALQUER, 'Município', 'aceita qualquer município'),
         );
+        pontuacao += PONTOS_QUALQUER;
+      } else if (municipio) {
+        const alvo = municipio.toLowerCase().trim();
+        const aceita = comprador.municipiosAceitos.some((m) => m.toLowerCase().trim() === alvo);
+        if (aceita) {
+          motivos.push(
+            motivo(MOTIVO_TIPO.MUNICIPIO_ACEITO, `${municipio}`, 'aceita explicitamente'),
+          );
+          pontuacao += PONTOS_ESPECIFICO;
+        } else {
+          bloqueios.push(
+            bloqueio(
+              BLOQUEIO_TIPO.MUNICIPIO_NAO_ACEITO,
+              `Não aceita ${municipio}`,
+              `Aceita: ${comprador.municipiosAceitos.slice(0, 3).join(', ')}${comprador.municipiosAceitos.length > 3 ? '…' : ''}`,
+            ),
+          );
+        }
       }
     }
   }

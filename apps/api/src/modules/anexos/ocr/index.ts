@@ -7,9 +7,9 @@ import { normalizarTexto } from './parsers/utils';
 
 const logger = new Logger('OCR');
 
-const MIN_TEXTO_VALIDO = 100;
-const TESSERACT_TIMEOUT_MS = 60_000;
-const TESSERACT_MAX_PAGES = 3;
+const MIN_TEXTO_VALIDO = Number(process.env.OCR_MIN_TEXTO_VALIDO ?? 100);
+const TESSERACT_TIMEOUT_MS = Number(process.env.OCR_TIMEOUT_MS ?? 60_000);
+const TESSERACT_MAX_PAGES = Number(process.env.OCR_MAX_PAGES ?? 3);
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolveP, rejectP) => {

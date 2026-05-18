@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { confirmAction } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -7,23 +8,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCnpj } from '@/lib/format-cnpj';
 import { SCORE_LABELS } from '@preca/shared';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCompradores, useDeleteComprador } from './hooks';
 
 export function CompradoresListPage() {
   const { data: compradores, isLoading } = useCompradores();
   const remove = useDeleteComprador();
 
-  async function onDelete(id: string, nome: string) {
-    if (!window.confirm(`Excluir comprador "${nome}"?`)) return;
-    try {
-      await remove.mutateAsync(id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(id: string, nome: string) {
+    confirmAction({
+      title: `Excluir comprador "${nome}"?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await remove.mutateAsync(id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   return (
@@ -63,7 +73,7 @@ export function CompradoresListPage() {
               return (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.nome}</TableCell>
-                  <TableCell className="font-mono text-xs">{c.cnpj}</TableCell>
+                  <TableCell className="font-mono text-xs">{formatCnpj(c.cnpj)}</TableCell>
                   <TableCell className="text-xs">{aceita.join(' · ') || '—'}</TableCell>
                   <TableCell className="text-xs">
                     {c.scoresAceitos.map((s) => SCORE_LABELS[s]).join(', ') || '—'}

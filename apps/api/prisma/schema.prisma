@@ -131,11 +131,13 @@ model Comprador {
   ufsAceitas        String[]          @default([])
   municipiosAceitos String[]          @default([])
   scoresAceitos     ScorePrecatorio[] @default([])
+  ativo             Boolean           @default(true)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   cotacoes Cotacao[]
 
+  @@index([ativo])
   @@map("compradores")
 }
 

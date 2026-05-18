@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { confirmAction } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -9,20 +10,28 @@ import {
 } from '@/components/ui/table';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCedentes, useDeleteCedente } from './hooks';
 
 export function CedentesListPage() {
   const { data: cedentes, isLoading } = useCedentes();
   const remove = useDeleteCedente();
 
-  async function onDelete(id: string, nome: string) {
-    if (!window.confirm(`Excluir cedente "${nome}"?`)) return;
-    try {
-      await remove.mutateAsync(id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(id: string, nome: string) {
+    confirmAction({
+      title: `Excluir cedente "${nome}"?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await remove.mutateAsync(id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   return (

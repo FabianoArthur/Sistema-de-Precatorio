@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { confirmAction } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { type OcrStatus } from '@preca/shared';
 import { Eye, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useAnexos, useDeleteAnexo, useReprocessarAnexo } from './hooks';
 import type { AnexoSummary } from './types';
 import { UploadZone } from './upload-zone';
@@ -50,14 +52,21 @@ export function AnexosTab({ precatorioId }: AnexosTabProps) {
   const { data: anexos } = useAnexos(precatorioId);
   const lista = anexos ?? [];
 
-  async function onDelete(a: AnexoSummary) {
-    if (!window.confirm(`Excluir "${a.nome}"?`)) return;
-    try {
-      await deleteAnexo.mutateAsync(a.id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(a: AnexoSummary) {
+    confirmAction({
+      title: `Excluir "${a.nome}"?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await deleteAnexo.mutateAsync(a.id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   return (

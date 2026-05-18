@@ -41,7 +41,7 @@ export class CotacoesService {
     if (!precatorio) throw new NotFoundException('Precatório não encontrado');
 
     const [compradores, cotacoesExistentes] = await Promise.all([
-      this.prisma.comprador.findMany({ orderBy: { nome: 'asc' } }),
+      this.prisma.comprador.findMany({ where: { ativo: true }, orderBy: { nome: 'asc' } }),
       this.prisma.cotacao.findMany({
         where: { precatorioId },
         select: { compradorId: true },

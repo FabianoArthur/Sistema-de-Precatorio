@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog } from '@/components/ui/dialog';
+import { formatCnpj } from '@/lib/format-cnpj';
 import { cn } from '@/lib/utils';
 import { CheckCheck, Sparkles, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useCompradoresSugeridos, useEnviarCotacoes } from './hooks';
 import { BloqueioPill, MatchPill } from './match-pill';
 import type { CompradorBloqueado, CompradorSugerido } from './types';
@@ -56,20 +58,20 @@ export function EnviarCotacoesDialog({ open, onClose, precatorioId }: EnviarDial
 
   async function onSubmit() {
     if (selecionados.size === 0) {
-      window.alert('Selecione ao menos um comprador');
+      toast.error('Selecione ao menos um comprador');
       return;
     }
     try {
       const result = await enviar.mutateAsync({ compradorIds: Array.from(selecionados) });
       onClose();
       if (result.duplicadas > 0) {
-        window.alert(
+        toast.info(
           `${result.criadas} cotação(ões) criada(s). ${result.duplicadas} já existiam e foram ignoradas.`,
         );
       }
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao enviar cotações');
+      toast.error(msg ?? 'Falha ao enviar cotações');
     }
   }
 
@@ -183,7 +185,7 @@ function SecaoSugeridos({
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-sm font-medium">{s.comprador.nome}</span>
                   <span className="text-2xs font-mono text-muted-foreground">
-                    {s.comprador.cnpj}
+                    {formatCnpj(s.comprador.cnpj)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -249,7 +251,7 @@ function SecaoBloqueados({
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-sm font-medium">{b.comprador.nome}</span>
                   <span className="text-2xs font-mono text-muted-foreground">
-                    {b.comprador.cnpj}
+                    {formatCnpj(b.comprador.cnpj)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1">

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { type NotificacoesFiltros, notificacoesFiltrosSchema } from '@preca/shared';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe';
 import { CurrentUser, type CurrentUserPayload } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificacoesService } from './notificacoes.service';
@@ -25,8 +26,10 @@ export class NotificacoesController {
   constructor(private readonly notificacoesService: NotificacoesService) {}
 
   @Get()
-  list(@Query() query: Record<string, string>, @CurrentUser() user: CurrentUserPayload) {
-    const filtros: NotificacoesFiltros = notificacoesFiltrosSchema.parse(query);
+  list(
+    @Query(new ZodValidationPipe(notificacoesFiltrosSchema, 'query')) filtros: NotificacoesFiltros,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
     return this.notificacoesService.list(user.id, filtros);
   }
 

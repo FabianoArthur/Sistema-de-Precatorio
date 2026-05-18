@@ -7,6 +7,7 @@ import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { router } from './router';
 import './styles/globals.css';
 
@@ -19,6 +20,7 @@ const Tree = (
         <AuthProvider>
           <NuqsAdapter>
             <RouterProvider router={router} />
+            <Toaster richColors position="top-right" />
           </NuqsAdapter>
         </AuthProvider>
       </QueryClientProvider>

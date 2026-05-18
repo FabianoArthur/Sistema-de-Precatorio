@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCnpj } from '@/lib/format-cnpj';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useCompradoresSugeridos, useEnviarCotacoes } from './hooks';
 import { MatchPill } from './match-pill';
 import type { CompradorSugerido } from './types';
@@ -33,7 +35,7 @@ export function SugestoesCard({ precatorioId, onOpenEnviarDialog }: SugestoesCar
       await enviar.mutateAsync({ compradorIds: [compradorId] });
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao solicitar cotação');
+      toast.error(msg ?? 'Falha ao solicitar cotação');
     } finally {
       setEnviandoId(null);
     }
@@ -123,7 +125,9 @@ function SugestaoLinha({
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium truncate">{comprador.nome}</span>
-          <span className="text-2xs font-mono text-muted-foreground">{comprador.cnpj}</span>
+          <span className="text-2xs font-mono text-muted-foreground">
+            {formatCnpj(comprador.cnpj)}
+          </span>
           <PontuacaoBadge pontuacao={pontuacao} />
         </div>
         <div className="flex flex-wrap gap-1">

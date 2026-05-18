@@ -26,6 +26,7 @@ import { ArrowLeft, Clock, Pencil, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useMudarEstagio, usePrecatorio } from './hooks';
 
 const TABS = ['dados', 'cotacoes', 'negociacoes', 'anexos', 'historico'] as const;
@@ -141,7 +142,22 @@ export function PrecatorioDetailPage() {
       {anexos && anexos.length > 0 && <DiffBanner precatorio={p} anexos={anexos} />}
 
       {/* Tabs */}
-      <div className="flex border-b border-border gap-1 overflow-x-auto">
+      <div
+        role="tablist"
+        aria-label="Seções do precatório"
+        className="flex border-b border-border gap-1 overflow-x-auto"
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          const idx = TABS.indexOf(tab);
+          const next =
+            e.key === 'ArrowRight'
+              ? (idx + 1) % TABS.length
+              : (idx - 1 + TABS.length) % TABS.length;
+          setTab(TABS[next]);
+          document.getElementById(`tab-${TABS[next]}`)?.focus();
+        }}
+      >
         {TABS.map((t) => {
           const count =
             t === 'cotacoes'
@@ -155,6 +171,11 @@ export function PrecatorioDetailPage() {
             <button
               key={t}
               type="button"
+              role="tab"
+              id={`tab-${t}`}
+              aria-selected={tab === t}
+              aria-controls={`panel-${t}`}
+              tabIndex={tab === t ? 0 : -1}
               onClick={() => setTab(t)}
               className={cn(
                 'relative px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap',
@@ -186,7 +207,12 @@ export function PrecatorioDetailPage() {
       </div>
 
       {tab === 'dados' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div
+          role="tabpanel"
+          id="panel-dados"
+          aria-labelledby="tab-dados"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        >
           <Section title="Identificação">
             <Field label="Nº precatório" value={p.numeroPrecatorio} />
             <Field label="Nº processo" value={p.numeroProcesso} />
@@ -225,12 +251,24 @@ export function PrecatorioDetailPage() {
         </div>
       )}
 
-      {tab === 'cotacoes' && <CotacoesTab precatorioId={p.id} cotacoes={p.cotacoes} />}
-      {tab === 'negociacoes' && <NegociacoesTab precatorioId={p.id} negociacoes={p.negociacoes} />}
-      {tab === 'anexos' && <AnexosTab precatorioId={p.id} />}
+      {tab === 'cotacoes' && (
+        <div role="tabpanel" id="panel-cotacoes" aria-labelledby="tab-cotacoes">
+          <CotacoesTab precatorioId={p.id} cotacoes={p.cotacoes} />
+        </div>
+      )}
+      {tab === 'negociacoes' && (
+        <div role="tabpanel" id="panel-negociacoes" aria-labelledby="tab-negociacoes">
+          <NegociacoesTab precatorioId={p.id} negociacoes={p.negociacoes} />
+        </div>
+      )}
+      {tab === 'anexos' && (
+        <div role="tabpanel" id="panel-anexos" aria-labelledby="tab-anexos">
+          <AnexosTab precatorioId={p.id} />
+        </div>
+      )}
 
       {tab === 'historico' && (
-        <Card>
+        <Card role="tabpanel" id="panel-historico" aria-labelledby="tab-historico">
           <CardContent className="pt-5">
             {p.historico.length === 0 ? (
               <p className="text-muted-foreground text-sm">Nenhuma movimentação registrada.</p>
@@ -366,7 +404,7 @@ function MudarEstagioDialog({
       onClose();
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao mudar estágio');
+      toast.error(msg ?? 'Falha ao mudar estágio');
     }
   }
 

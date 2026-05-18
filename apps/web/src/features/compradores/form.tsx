@@ -16,6 +16,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useComprador, useCreateComprador, useUpdateComprador } from './hooks';
 
 const SCORE_OPTIONS = [
@@ -79,7 +80,7 @@ export function CompradorFormPage() {
       navigate('/compradores');
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao salvar');
+      toast.error(msg ?? 'Falha ao salvar');
     }
   }
 

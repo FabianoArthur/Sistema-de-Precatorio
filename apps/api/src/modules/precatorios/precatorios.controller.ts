@@ -36,8 +36,7 @@ export class PrecatoriosController {
   constructor(private readonly precatoriosService: PrecatoriosService) {}
 
   @Get()
-  list(@Query() query: Record<string, string>) {
-    const filters: PrecatorioFilters = precatorioFiltersSchema.parse(query);
+  list(@Query(new ZodValidationPipe(precatorioFiltersSchema, 'query')) filters: PrecatorioFilters) {
     return this.precatoriosService.list(filters);
   }
 

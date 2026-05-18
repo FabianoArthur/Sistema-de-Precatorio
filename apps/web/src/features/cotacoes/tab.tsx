@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { confirmAction } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -9,10 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatBRL, formatDateTime } from '@/lib/format';
+import { formatCnpj } from '@/lib/format-cnpj';
 import { cn } from '@/lib/utils';
 import { type StatusCotacao } from '@preca/shared';
 import { Check, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { EnviarCotacoesDialog } from './enviar-dialog';
 import { useDeleteCotacao } from './hooks';
 import { RecusarCotacaoDialog } from './recusar-dialog';
@@ -43,14 +46,21 @@ export function CotacoesTab({ precatorioId, cotacoes }: CotacoesTabProps) {
   const [recusar, setRecusar] = useState<CotacaoSummary | null>(null);
   const deleteCotacao = useDeleteCotacao(precatorioId);
 
-  async function onDelete(c: CotacaoSummary) {
-    if (!window.confirm(`Excluir cotação de "${c.comprador.nome}"?`)) return;
-    try {
-      await deleteCotacao.mutateAsync(c.id);
-    } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao excluir');
-    }
+  function onDelete(c: CotacaoSummary) {
+    confirmAction({
+      title: `Excluir cotação de "${c.comprador.nome}"?`,
+      description: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await deleteCotacao.mutateAsync(c.id);
+        } catch (e) {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? 'Falha ao excluir');
+        }
+      },
+    });
   }
 
   return (
@@ -92,7 +102,7 @@ export function CotacoesTab({ precatorioId, cotacoes }: CotacoesTabProps) {
                     <TableCell>
                       <div className="font-medium">{c.comprador.nome}</div>
                       <div className="text-2xs text-muted-foreground font-mono">
-                        {c.comprador.cnpj}
+                        {formatCnpj(c.comprador.cnpj)}
                       </div>
                     </TableCell>
                     <TableCell>

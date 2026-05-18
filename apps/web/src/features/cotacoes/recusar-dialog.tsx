@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type CotacaoRecusarInput, cotacaoRecusarSchema } from '@preca/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { useRecusarCotacao } from './hooks';
 import type { CotacaoSummary } from './types';
 
@@ -41,7 +42,7 @@ export function RecusarCotacaoDialog({ open, onClose, precatorioId, cotacao }: R
       onClose();
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao recusar cotação');
+      toast.error(msg ?? 'Falha ao recusar cotação');
     }
   }
 

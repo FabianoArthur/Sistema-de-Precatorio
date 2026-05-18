@@ -19,6 +19,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCreatePrecatorio, usePrecatorio, useUpdatePrecatorio } from './hooks';
 
 const TIPO_OPTIONS = [
@@ -103,7 +104,7 @@ export function PrecatorioFormPage() {
       navigate(`/precatorios/${result.id}`);
     } catch (e) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      window.alert(msg ?? 'Falha ao salvar');
+      toast.error(msg ?? 'Falha ao salvar');
     }
   }
 
