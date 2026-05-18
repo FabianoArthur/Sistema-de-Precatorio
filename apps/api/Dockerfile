@@ -16,7 +16,7 @@ COPY packages/shared packages/shared
 COPY apps/api apps/api
 
 RUN pnpm --filter @preca/shared build
-RUN pnpm --filter @preca/api prisma generate
+RUN pnpm --filter @preca/api prisma:generate
 RUN pnpm --filter @preca/api build
 
 
@@ -37,8 +37,8 @@ COPY --from=builder /repo/apps/api/package.json apps/api/
 COPY --from=builder /repo/apps/api/dist apps/api/dist
 COPY --from=builder /repo/apps/api/prisma apps/api/prisma
 
-RUN pnpm install --frozen-lockfile --prod --filter @preca/api... --filter @preca/shared \
-    && pnpm --filter @preca/api prisma generate
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @preca/api... --filter @preca/shared \
+    && pnpm --filter @preca/api prisma:generate
 
 RUN mkdir -p apps/api/uploads
 
