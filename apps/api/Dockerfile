@@ -8,7 +8,7 @@ WORKDIR /repo
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/tsconfig.json packages/shared/
-COPY apps/api/package.json apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/nest-cli.json apps/api/
+COPY apps/api/package.json apps/api/tsconfig.json apps/api/nest-cli.json apps/api/
 
 RUN pnpm install --frozen-lockfile --filter @preca/api... --filter @preca/shared
 
