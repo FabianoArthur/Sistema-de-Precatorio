@@ -83,7 +83,7 @@ export class PrecatoriosService {
           devedorUf: data.devedorUf ?? null,
           devedorMunicipio: data.devedorMunicipio ?? null,
           tipo: data.tipo,
-          valorOriginal: this.toDecimal(data.valorOriginal)!,
+          valorOriginal: new Prisma.Decimal(data.valorOriginal),
           valorAtualizado: this.toDecimal(data.valorAtualizado ?? null),
           desagio: this.toDecimal(data.desagio ?? null),
           valorLiquido: this.toDecimal(data.valorLiquido ?? null),
