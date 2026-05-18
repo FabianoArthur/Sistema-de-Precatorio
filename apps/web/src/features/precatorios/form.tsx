@@ -7,6 +7,7 @@ import { CedentePicker } from '@/features/cedentes/cedente-picker';
 import { useParceiros } from '@/features/parceiros/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  NATUREZA_LABELS,
   NaturezaPrecatorio,
   type PrecatorioCreateInput,
   TIPO_LABELS,
@@ -182,7 +183,7 @@ export function PrecatorioFormPage() {
                 >
                   {NATUREZA_OPTIONS.map((n) => (
                     <option key={n} value={n}>
-                      {n}
+                      {NATUREZA_LABELS[n]}
                     </option>
                   ))}
                 </Select>

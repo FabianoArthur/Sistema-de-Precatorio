@@ -5,6 +5,8 @@ import type {
   TipoPrecatorio,
 } from '@preca/shared';
 import type { Cedente } from '../cedentes/types';
+import type { CotacaoSummary } from '../cotacoes/types';
+import type { NegociacaoSummary } from '../negociacoes/types';
 import type { Parceiro } from '../parceiros/types';
 
 export interface PrecatorioListItem {
@@ -57,23 +59,7 @@ export interface PrecatorioDetail extends PrecatorioListItem {
     tamanho: number;
     createdAt: string;
   }>;
-  cotacoes: Array<{
-    id: string;
-    compradorId: string;
-    comprador: { id: string; nome: string; cnpj: string };
-    status: 'PENDENTE' | 'RECEBIDA' | 'RECUSADA';
-    valorBruto: string | null;
-    comissao: string | null;
-    observacao: string | null;
-    dataEnvio: string;
-    dataResposta: string | null;
-  }>;
-  negociacoes: Array<{
-    id: string;
-    origem: 'NOSSA' | 'CEDENTE';
-    valor: string;
-    observacao: string | null;
-    createdAt: string;
-  }>;
+  cotacoes: CotacaoSummary[];
+  negociacoes: NegociacaoSummary[];
   historico: HistoricoEstagioItem[];
 }

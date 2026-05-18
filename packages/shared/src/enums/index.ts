@@ -39,6 +39,12 @@ export const NaturezaPrecatorio = {
 } as const;
 export type NaturezaPrecatorio = (typeof NaturezaPrecatorio)[keyof typeof NaturezaPrecatorio];
 
+export const NATUREZA_LABELS: Record<NaturezaPrecatorio, string> = {
+  FEDERAL: 'Federal',
+  ESTADUAL: 'Estadual',
+  MUNICIPAL: 'Municipal',
+};
+
 export const TipoPrecatorio = {
   HONORARIOS: 'HONORARIOS',
   ALIMENTAR: 'ALIMENTAR',

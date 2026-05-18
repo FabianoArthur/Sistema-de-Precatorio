@@ -4,44 +4,93 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Backgrounds & surfaces */
+    --background: 240 10% 98%;
+    --foreground: 240 10% 10%;
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --card-foreground: 240 10% 10%;
+    --card-muted: 240 8% 97%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    /* Brand: indigo/violet */
+    --primary: 244 68% 56%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 244 80% 96%;
+    --primary-strong: 244 75% 46%;
+
+    /* Accents */
+    --secondary: 240 6% 96%;
+    --secondary-foreground: 240 8% 20%;
+    --accent: 244 90% 97%;
+    --accent-foreground: 244 75% 46%;
+
+    --muted: 240 6% 94%;
+    --muted-foreground: 240 5% 45%;
+
+    --success: 152 65% 38%;
+    --success-soft: 152 60% 95%;
+    --warning: 35 92% 50%;
+    --warning-soft: 38 92% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 80% 96%;
+
+    --border: 240 6% 90%;
+    --border-strong: 240 6% 82%;
+    --input: 240 6% 90%;
+    --ring: 244 75% 56%;
+
+    --radius: 0.625rem;
+
+    --shadow-soft: 0 1px 2px -1px hsl(240 10% 10% / 0.08), 0 2px 8px -4px hsl(240 10% 10% / 0.06);
+    --shadow-elevated: 0 4px 6px -2px hsl(240 10% 10% / 0.05), 0 12px 24px -6px
+      hsl(240 10% 10% / 0.1);
+    --shadow-overlay: 0 24px 48px -12px hsl(240 10% 10% / 0.18);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 240 10% 6%;
+    --foreground: 240 10% 96%;
+
+    --card: 240 10% 9%;
+    --card-foreground: 240 10% 96%;
+    --card-muted: 240 10% 11%;
+
+    --popover: 240 10% 9%;
+    --popover-foreground: 240 10% 96%;
+
+    --primary: 244 72% 64%;
+    --primary-foreground: 240 10% 6%;
+    --primary-soft: 244 50% 16%;
+    --primary-strong: 244 80% 70%;
+
+    --secondary: 240 8% 14%;
+    --secondary-foreground: 240 10% 96%;
+    --accent: 244 40% 18%;
+    --accent-foreground: 244 80% 80%;
+
+    --muted: 240 8% 14%;
+    --muted-foreground: 240 6% 60%;
+
+    --success: 152 60% 50%;
+    --success-soft: 152 40% 14%;
+    --warning: 35 92% 60%;
+    --warning-soft: 35 50% 14%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 50% 14%;
+
+    --border: 240 8% 18%;
+    --border-strong: 240 8% 26%;
+    --input: 240 8% 18%;
+    --ring: 244 72% 64%;
+
+    --shadow-soft: 0 1px 2px -1px hsl(0 0% 0% / 0.4), 0 2px 8px -4px hsl(0 0% 0% / 0.5);
+    --shadow-elevated: 0 4px 6px -2px hsl(0 0% 0% / 0.4), 0 12px 24px -6px hsl(0 0% 0% / 0.6);
+    --shadow-overlay: 0 24px 48px -12px hsl(0 0% 0% / 0.7);
   }
 }
 
@@ -49,8 +98,56 @@
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv11" on, "ss01" on, "ss03" on;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight text-foreground;
+    font-feature-settings: "cv11" on, "ss01" on;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border-strong));
+    border-radius: 999px;
+    border: 2px solid hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.6);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-feature-settings: "cv11" on, "ss01" on, "ss03" on, "cv02" on;
+    letter-spacing: -0.02em;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
   }
 }

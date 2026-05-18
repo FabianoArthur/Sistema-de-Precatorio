@@ -6,11 +6,12 @@ interface DialogProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  description?: string;
   children: ReactNode;
   className?: string;
 }
 
-export function Dialog({ open, onClose, title, children, className }: DialogProps) {
+export function Dialog({ open, onClose, title, description, children, className }: DialogProps) {
   useEffect(() => {
     if (!open) return;
     function handleEscape(e: KeyboardEvent) {
@@ -28,29 +29,34 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 backdrop-blur-sm p-4 animate-fade-in"
       onClick={onClose}
-      onKeyDown={(e) => e.key === 'Enter' && onClose()}
       role="presentation"
     >
       <div
         className={cn(
-          'relative w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-xl',
+          'relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-overlay',
           className,
         )}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        {title && <h2 className="mb-4 text-lg font-semibold">{title}</h2>}
+        {(title || description) && (
+          <div className="mb-5 pr-8">
+            {title && (
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+            )}
+            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+          </div>
+        )}
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+          className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
         {children}
       </div>

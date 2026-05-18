@@ -1,19 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   AcaoAudit,
+  ESTAGIO_LABELS,
+  type EstagioPrecatorio,
   type MudarEstagioInput,
   type PrecatorioCreateInput,
   type PrecatorioFilters,
   type PrecatorioUpdateInput,
   type ScorePrecatorio,
+  TipoNotificacao,
   calcularScore,
 } from '@preca/shared';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificacoesService } from '../notificacoes/notificacoes.service';
 
 @Injectable()
 export class PrecatoriosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   list(filters: PrecatorioFilters = {}) {
     const where: Prisma.PrecatorioWhereInput = {};
@@ -42,7 +49,10 @@ export class PrecatoriosService {
         parceiro: true,
         anexos: { orderBy: { createdAt: 'desc' } },
         cotacoes: { include: { comprador: true }, orderBy: { valorBruto: 'desc' } },
-        negociacoes: { orderBy: { createdAt: 'desc' } },
+        negociacoes: {
+          include: { createdBy: { select: { id: true, nome: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
         historico: {
           include: { user: { select: { id: true, nome: true } } },
           orderBy: { createdAt: 'desc' },
@@ -212,6 +222,17 @@ export class PrecatoriosService {
           } as Prisma.InputJsonValue,
           userId,
         },
+      });
+
+      const numero = updated.numeroPrecatorio ?? updated.numeroProcesso ?? '(sem nº)';
+      const labelAntes = ESTAGIO_LABELS[precatorio.estagioAtual as EstagioPrecatorio];
+      const labelDepois = ESTAGIO_LABELS[body.novoEstagio];
+      await this.notificacoes.criarParaTodos({
+        tipo: TipoNotificacao.MUDANCA_ESTAGIO,
+        mensagem: `Precatório ${numero}: ${labelAntes} → ${labelDepois}.`,
+        link: `/precatorios/${id}`,
+        excetoUserId: userId,
+        tx,
       });
 
       return updated;

@@ -1,28 +1,47 @@
-FROM node:22-alpine AS base
+### Stage 1: Build ###
+FROM node:22-alpine AS builder
+
+RUN apk add --no-cache openssl libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
-FROM base AS deps
-WORKDIR /workspace
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
-COPY apps/api/package.json apps/api/package.json
-COPY packages/shared/package.json packages/shared/package.json
-RUN pnpm install --frozen-lockfile
+WORKDIR /repo
 
-FROM base AS build
-WORKDIR /workspace
-COPY --from=deps /workspace/node_modules ./node_modules
-COPY --from=deps /workspace/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /workspace/packages/shared/node_modules ./packages/shared/node_modules
-COPY . .
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.base.json ./
+COPY packages/shared/package.json packages/shared/tsconfig.json packages/shared/
+COPY apps/api/package.json apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/nest-cli.json apps/api/
+
+RUN pnpm install --frozen-lockfile --filter @preca/api... --filter @preca/shared
+
+COPY packages/shared packages/shared
+COPY apps/api apps/api
+
+RUN pnpm --filter @preca/shared build
 RUN pnpm --filter @preca/api prisma generate
 RUN pnpm --filter @preca/api build
 
-FROM base AS runtime
-WORKDIR /app
+
+### Stage 2: Runtime ###
+FROM node:22-alpine AS runtime
+
+RUN apk add --no-cache openssl libc6-compat tini \
+    && corepack enable \
+    && corepack prepare pnpm@10.0.0 --activate
+
 ENV NODE_ENV=production
-COPY --from=build /workspace/apps/api/dist ./dist
-COPY --from=build /workspace/apps/api/node_modules ./node_modules
-COPY --from=build /workspace/apps/api/package.json ./package.json
-COPY --from=build /workspace/apps/api/prisma ./prisma
+WORKDIR /app
+
+COPY --from=builder /repo/pnpm-workspace.yaml /repo/pnpm-lock.yaml /repo/package.json ./
+COPY --from=builder /repo/packages/shared/package.json packages/shared/
+COPY --from=builder /repo/packages/shared/dist packages/shared/dist
+COPY --from=builder /repo/apps/api/package.json apps/api/
+COPY --from=builder /repo/apps/api/dist apps/api/dist
+COPY --from=builder /repo/apps/api/prisma apps/api/prisma
+
+RUN pnpm install --frozen-lockfile --prod --filter @preca/api... --filter @preca/shared \
+    && pnpm --filter @preca/api prisma generate
+
+RUN mkdir -p apps/api/uploads
+
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["sh", "-c", "cd apps/api && pnpm prisma migrate deploy && node dist/main.js"]

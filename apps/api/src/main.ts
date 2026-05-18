@@ -1,16 +1,30 @@
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { SentryExceptionFilter } from './common/sentry.filter';
+import { initSentry } from './sentry';
 
 async function bootstrap() {
+  const sentryAtivo = initSentry();
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  if (sentryAtivo) {
+    app.useGlobalFilters(new SentryExceptionFilter());
+    new Logger('Sentry').log('Sentry inicializado.');
+  }
 
+  const corsOrigin = config.get<string>('CORS_ORIGIN');
+  const isProd = config.get<string>('NODE_ENV') === 'production';
+  if (isProd && !corsOrigin) {
+    throw new Error(
+      'CORS_ORIGIN não configurado em produção. Defina a URL do frontend (ex: https://app.exemplo.com).',
+    );
+  }
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN', 'http://localhost:5173'),
+    origin: corsOrigin ?? 'http://localhost:5173',
     credentials: true,
   });
 

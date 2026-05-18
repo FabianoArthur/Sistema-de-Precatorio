@@ -6,8 +6,53 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DATABASE_URL: postgresql://preca:preca_dev@localhost:5432/preca_dev?schema=public
+  JWT_SECRET: ci-only-secret-not-for-production
+
 jobs:
-  ci:
+  lint-build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: preca
+          POSTGRES_PASSWORD: preca_dev
+          POSTGRES_DB: preca_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+      - name: Type-check
+        run: pnpm turbo run type-check
+      - name: Prisma generate
+        run: pnpm --filter @preca/api prisma:generate
+      - name: Prisma migrate
+        run: pnpm --filter @preca/api prisma migrate deploy
+      - name: Build
+        run: pnpm build
+      - name: Test (unit)
+        run: pnpm test
+
+  e2e:
+    needs: lint-build-test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -24,37 +69,86 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://preca:preca_dev@localhost:5432/preca_dev?schema=public
-      JWT_SECRET: ci-only-secret-not-for-production
+      VITE_API_URL: http://localhost:3001
+      PLAYWRIGHT_API_URL: http://localhost:3001
+      E2E_USER_EMAIL: admin@preca.local
+      E2E_USER_PASSWORD: admin123
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type-check
-        run: pnpm turbo run type-check
-
+      - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm --filter @preca/api prisma:generate
-
       - name: Prisma migrate
         run: pnpm --filter @preca/api prisma migrate deploy
+      - name: Seed
+        run: pnpm --filter @preca/api prisma:seed
+      - name: Build shared + API
+        run: pnpm --filter @preca/shared build && pnpm --filter @preca/api build
+      - name: Install Playwright browsers
+        run: pnpm --filter @preca/web exec playwright install --with-deps chromium
+      - name: Start API in background
+        run: pnpm --filter @preca/api start &
+      - name: Wait for API
+        run: npx wait-on http://localhost:3001/health --timeout 60000
+      - name: Run Playwright
+        run: pnpm --filter @preca/web e2e
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
 
-      - name: Build
-        run: pnpm build
+  deploy-api:
+    needs: e2e
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-api
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Test
-        run: pnpm test
+  deploy-web:
+    needs: e2e
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-web
+      cancel-in-progress: false
+    env:
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @preca/shared build
+      - run: pnpm --filter @preca/web build
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: preca-web
+          directory: apps/web/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

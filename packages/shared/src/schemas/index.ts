@@ -5,4 +5,7 @@ export * from './comprador';
 export * from './precatorio';
 export * from './cotacao';
 export * from './negociacao';
+export * from './anexo';
+export * from './notificacao';
+export * from './dashboard';
 export * from './filtros';

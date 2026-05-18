@@ -38,6 +38,10 @@ Thumbs.db
 .eslintcache
 *.tsbuildinfo
 
+# Vite config build artifacts (gerados por tsc -b)
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
+
 # Sentry
 .sentryclirc
 

@@ -1,11 +1,15 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAuth } from '@/contexts/auth-context';
 import { LoginPage } from '@/features/auth/login';
+import { CedenteFormPage } from '@/features/cedentes/form';
+import { CedentesListPage } from '@/features/cedentes/list';
 import { CompradorFormPage } from '@/features/compradores/form';
 import { CompradoresListPage } from '@/features/compradores/list';
 import { DashboardPage } from '@/features/dashboard/dashboard';
 import { ParceiroFormPage } from '@/features/parceiros/form';
 import { ParceirosListPage } from '@/features/parceiros/list';
+import { PrecatorioDetailPage } from '@/features/precatorios/detail';
+import { PrecatorioFormPage } from '@/features/precatorios/form';
 import { PrecatoriosListPage } from '@/features/precatorios/list';
 import { Navigate, Outlet, createBrowserRouter } from 'react-router-dom';
 
@@ -26,12 +30,18 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <DashboardPage /> },
           { path: '/precatorios', element: <PrecatoriosListPage /> },
+          { path: '/precatorios/novo', element: <PrecatorioFormPage /> },
+          { path: '/precatorios/:id', element: <PrecatorioDetailPage /> },
+          { path: '/precatorios/:id/editar', element: <PrecatorioFormPage /> },
           { path: '/parceiros', element: <ParceirosListPage /> },
           { path: '/parceiros/novo', element: <ParceiroFormPage /> },
           { path: '/parceiros/:id', element: <ParceiroFormPage /> },
           { path: '/compradores', element: <CompradoresListPage /> },
           { path: '/compradores/novo', element: <CompradorFormPage /> },
           { path: '/compradores/:id', element: <CompradorFormPage /> },
+          { path: '/cedentes', element: <CedentesListPage /> },
+          { path: '/cedentes/novo', element: <CedenteFormPage /> },
+          { path: '/cedentes/:id', element: <CedenteFormPage /> },
         ],
       },
     ],

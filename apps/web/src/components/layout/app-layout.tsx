@@ -1,5 +1,7 @@
+import { BrandWordmark } from '@/components/brand-mark';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
+import { NotificacoesBell } from '@/features/notificacoes/bell';
 import { cn } from '@/lib/utils';
 import { Building2, Handshake, LayoutDashboard, LogOut, Moon, ScrollText, Sun } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -16,53 +18,97 @@ export function AppLayout() {
   const { theme, toggle } = useTheme();
   const location = useLocation();
 
+  function isActive(to: string) {
+    if (to === '/') return location.pathname === '/';
+    return location.pathname.startsWith(to);
+  }
+
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="w-64 border-r border-border flex flex-col">
-        <div className="h-14 flex items-center px-4 border-b border-border font-semibold">
-          Preca
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      <aside className="w-64 shrink-0 border-r border-border bg-card/60 backdrop-blur flex flex-col">
+        {/* Brand */}
+        <div className="h-16 flex items-center px-5 border-b border-border">
+          <BrandWordmark />
         </div>
-        <nav className="flex-1 p-2 space-y-1">
+
+        {/* Section label */}
+        <div className="px-5 pt-5 pb-2">
+          <span className="text-2xs font-semibold uppercase text-muted-foreground tracking-wider">
+            Navegação
+          </span>
+        </div>
+
+        <nav className="flex-1 px-3 space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = location.pathname === item.to;
+            const active = isActive(item.to);
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors',
+                  'group relative flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all',
                   active
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                    ? 'bg-primary-soft text-primary-strong'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
-                <Icon size={16} />
+                {active && (
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-r-full bg-primary"
+                    aria-hidden
+                  />
+                )}
+                <Icon
+                  size={16}
+                  className={cn(
+                    'transition-colors',
+                    active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
+                  )}
+                />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="p-2 border-t border-border space-y-1">
+
+        {/* Bottom area */}
+        <div className="px-3 pt-3 pb-2 space-y-0.5 border-t border-border">
+          <NotificacoesBell />
           <button
             type="button"
             onClick={toggle}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
           </button>
-          <button
-            type="button"
-            onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
-          >
-            <LogOut size={16} />
-            Sair ({user?.nome})
-          </button>
+        </div>
+
+        {/* User */}
+        <div className="px-3 pb-4">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-card-muted/50 px-3 py-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold uppercase">
+              {user?.nome?.slice(0, 1) ?? '?'}
+            </div>
+            <div className="flex-1 min-w-0 leading-tight">
+              <div className="text-sm font-medium truncate">{user?.nome ?? 'Convidado'}</div>
+              <div className="text-2xs text-muted-foreground truncate">{user?.email}</div>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              title="Sair"
+              aria-label="Sair"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
+
+      <main className="flex-1 overflow-y-auto min-w-0">
         <Outlet />
       </main>
     </div>

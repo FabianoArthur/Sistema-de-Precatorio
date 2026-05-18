@@ -1,6 +1,11 @@
+import { BrandMark } from '@/components/brand-mark';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type LoginInput, loginSchema } from '@preca/shared';
+import { AlertCircle, Loader2, ShieldCheck, Sparkles, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -27,51 +32,133 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="w-full max-w-sm space-y-4 p-6 border border-border rounded-lg bg-card"
-      >
-        <h1 className="text-xl font-semibold">Entrar no Preca</h1>
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
+      {/* Lado esquerdo — branding */}
+      <aside className="hidden lg:flex relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-primary via-primary-strong to-[#3b3699] text-primary-foreground">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-40 mix-blend-screen pointer-events-none" />
+        <div
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
 
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium">
-            E-mail
-          </label>
-          <input
-            id="email"
-            type="email"
-            {...register('email')}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
-            autoComplete="email"
-          />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+        <header className="relative flex items-center gap-3">
+          <BrandMark size={40} className="bg-white/15 ring-white/30" />
+          <div className="leading-tight">
+            <div className="text-base font-semibold font-display">Preca</div>
+            <div className="text-xs text-primary-foreground/70">Controle de Precatórios</div>
+          </div>
+        </header>
+
+        <div className="relative space-y-8 max-w-md">
+          <h1 className="text-4xl font-semibold tracking-tight leading-tight font-display text-balance">
+            Do recebimento à escritura, todo o pipeline em um lugar.
+          </h1>
+
+          <ul className="space-y-3 text-sm text-primary-foreground/90">
+            <FeaturePill icon={Workflow}>
+              Fluxo bidirecional de estágios com SLA configurável
+            </FeaturePill>
+            <FeaturePill icon={Sparkles}>OCR automático em PDFs federais, TJSP e TJRJ</FeaturePill>
+            <FeaturePill icon={ShieldCheck}>
+              Audit log completo e notificações em tempo real
+            </FeaturePill>
+          </ul>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="senha" className="text-sm font-medium">
-            Senha
-          </label>
-          <input
-            id="senha"
-            type="password"
-            {...register('senha')}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
-            autoComplete="current-password"
-          />
-          {errors.senha && <p className="text-xs text-destructive">{errors.senha.message}</p>}
-        </div>
+        <footer className="relative text-xs text-primary-foreground/60">
+          © {new Date().getFullYear()} Preca · sistema interno
+        </footer>
+      </aside>
 
-        {erro && <p className="text-sm text-destructive">{erro}</p>}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50"
+      {/* Lado direito — form */}
+      <main className="flex items-center justify-center p-6 sm:p-10">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="w-full max-w-sm space-y-6 animate-fade-in"
+          noValidate
         >
-          {isSubmitting ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
+          <div className="lg:hidden flex items-center gap-2 mb-2">
+            <BrandMark size={32} />
+            <div className="font-semibold tracking-tight">Preca</div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight font-display">
+              Bem-vindo de volta
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Entre com suas credenciais para acessar o painel.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="voce@preca.local"
+                autoComplete="email"
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                aria-invalid={!!errors.senha}
+                {...register('senha')}
+              />
+              {errors.senha && <p className="text-xs text-destructive">{errors.senha.message}</p>}
+            </div>
+          </div>
+
+          {erro && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{erro}</span>
+            </div>
+          )}
+
+          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
+          </Button>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Sistema interno · acesso restrito a usuários autorizados
+          </p>
+        </form>
+      </main>
     </div>
+  );
+}
+
+function FeaturePill({
+  icon: Icon,
+  children,
+}: { icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-3">
+      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 ring-1 ring-white/20">
+        <Icon size={14} />
+      </span>
+      <span className="leading-relaxed">{children}</span>
+    </li>
   );
 }

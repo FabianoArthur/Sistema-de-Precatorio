@@ -1,14 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AcaoAudit, type CedenteCreateInput, type CedenteUpdateInput } from '@preca/shared';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Injectable()
 export class CedentesService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditLog: AuditLogService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   list() {
     return this.prisma.cedente.findMany({ orderBy: { nome: 'asc' } });
@@ -20,41 +17,53 @@ export class CedentesService {
     return cedente;
   }
 
-  async create(data: CedenteCreateInput, userId: string) {
-    const cedente = await this.prisma.cedente.create({ data });
-    await this.auditLog.registrar({
-      entidade: 'cedente',
-      entidadeId: cedente.id,
-      acao: AcaoAudit.CREATE,
-      depois: cedente,
-      userId,
+  create(data: CedenteCreateInput, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const cedente = await tx.cedente.create({ data });
+      await tx.auditLog.create({
+        data: {
+          entidade: 'cedente',
+          entidadeId: cedente.id,
+          acao: AcaoAudit.CREATE,
+          depois: cedente as unknown as Prisma.InputJsonValue,
+          userId,
+        },
+      });
+      return cedente;
     });
-    return cedente;
   }
 
   async update(id: string, data: CedenteUpdateInput, userId: string) {
     const antes = await this.findOne(id);
-    const depois = await this.prisma.cedente.update({ where: { id }, data });
-    await this.auditLog.registrar({
-      entidade: 'cedente',
-      entidadeId: id,
-      acao: AcaoAudit.UPDATE,
-      antes,
-      depois,
-      userId,
+    return this.prisma.$transaction(async (tx) => {
+      const depois = await tx.cedente.update({ where: { id }, data });
+      await tx.auditLog.create({
+        data: {
+          entidade: 'cedente',
+          entidadeId: id,
+          acao: AcaoAudit.UPDATE,
+          antes: antes as unknown as Prisma.InputJsonValue,
+          depois: depois as unknown as Prisma.InputJsonValue,
+          userId,
+        },
+      });
+      return depois;
     });
-    return depois;
   }
 
   async remove(id: string, userId: string) {
     const antes = await this.findOne(id);
-    await this.prisma.cedente.delete({ where: { id } });
-    await this.auditLog.registrar({
-      entidade: 'cedente',
-      entidadeId: id,
-      acao: AcaoAudit.DELETE,
-      antes,
-      userId,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cedente.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          entidade: 'cedente',
+          entidadeId: id,
+          acao: AcaoAudit.DELETE,
+          antes: antes as unknown as Prisma.InputJsonValue,
+          userId,
+        },
+      });
     });
   }
 }
