@@ -1,0 +1,1 @@
+export { instalarDemo } from './adapter';

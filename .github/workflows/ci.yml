@@ -4,15 +4,24 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DATABASE_URL: postgresql://preca:preca_dev@localhost:5432/preca_dev?schema=public
   JWT_SECRET: ci-only-secret-not-for-production
 
 jobs:
-  lint-build-test:
+  quality:
+    name: Lint, type-check, build, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -28,11 +37,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Sem `version`: a action lê o `packageManager` do package.json
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
@@ -40,20 +48,27 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-      - name: Type-check
-        run: pnpm turbo run type-check
       - name: Prisma generate
         run: pnpm --filter @preca/api prisma:generate
-      - name: Prisma migrate
-        run: pnpm --filter @preca/api prisma migrate deploy
+      - name: Type-check
+        run: pnpm turbo run type-check
+      - name: Prisma migrate (schema applies cleanly)
+        run: pnpm --filter @preca/api prisma:migrate:deploy
       - name: Build
         run: pnpm build
-      - name: Test (unit)
+      - name: Production bundle carries no demo code
+        run: |
+          if grep -rlE "não existe na demo|demo1234" apps/web/dist; then
+            echo "::error::demo code leaked into the production bundle"; exit 1
+          fi
+      - name: Unit tests
         run: pnpm test
 
   e2e:
-    needs: lint-build-test
+    name: E2E (API + Postgres + Playwright)
+    needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16-alpine
@@ -74,81 +89,83 @@ jobs:
       E2E_USER_EMAIL: admin@preca.local
       E2E_USER_PASSWORD: admin123
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Prisma generate
-        run: pnpm --filter @preca/api prisma:generate
-      - name: Prisma migrate
-        run: pnpm --filter @preca/api prisma migrate deploy
-      - name: Seed
-        run: pnpm --filter @preca/api prisma:seed
+      - name: Prisma generate, migrate and seed
+        run: |
+          pnpm --filter @preca/api prisma:generate
+          pnpm --filter @preca/api prisma:migrate:deploy
+          pnpm --filter @preca/api prisma:seed
       - name: Build shared + API
         run: pnpm --filter @preca/shared build && pnpm --filter @preca/api build
-      - name: Install Playwright browsers
+      - name: Install Playwright browser
         run: pnpm --filter @preca/web exec playwright install --with-deps chromium
       - name: Start API in background
-        run: pnpm --filter @preca/api start &
+        run: pnpm --filter @preca/api start > api.log 2>&1 &
       - name: Wait for API
-        run: npx wait-on http://localhost:3001/health --timeout 60000
+        run: |
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:3001/health && exit 0
+            sleep 1
+          done
+          cat api.log; exit 1
       - name: Run Playwright
         run: pnpm --filter @preca/web e2e
       - name: Upload report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: apps/web/playwright-report
           retention-days: 7
 
-  deploy-api:
-    needs: e2e
-    if: github.ref == 'refs/heads/main'
+  demo:
+    name: Demo build + E2E (no backend)
+    needs: quality
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-api
-      cancel-in-progress: false
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only --config apps/api/fly.toml --dockerfile apps/api/Dockerfile
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-  deploy-web:
-    needs: e2e
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-web
-      cancel-in-progress: false
-    env:
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @preca/shared build
-      - run: pnpm --filter @preca/web build
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+      - name: Install Playwright browser
+        run: pnpm --filter @preca/web exec playwright install --with-deps chromium
+      - name: Run Playwright against the demo build
+        run: pnpm --filter @preca/web e2e:demo
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: preca-web
-          directory: apps/web/dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          name: playwright-demo-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+  secrets:
+    name: Secret scan (gitleaks, full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks (checksum verified)
+        run: |
+          curl -sSLo gitleaks.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+      - name: Scan
+        run: ./gitleaks git --redact --verbose --exit-code 1 .

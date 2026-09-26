@@ -58,3 +58,6 @@ storybook-static/
 test-results/
 playwright-report/
 .playwright/
+
+# Orquestrador local (nao versionar)
+.orq/

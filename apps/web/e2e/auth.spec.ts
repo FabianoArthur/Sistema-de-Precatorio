@@ -7,7 +7,7 @@ test.describe('Auth flow', () => {
   test('redireciona usuário não autenticado para /login', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByRole('heading')).toContainText(/preca|login/i);
+    await expect(page.getByRole('heading', { name: /bem-vindo/i })).toBeVisible();
   });
 
   test('login válido leva ao dashboard', async ({ page }) => {

@@ -4,6 +4,8 @@ import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
+  // GitHub Pages serve o app em /<repo>/ — o workflow de deploy define VITE_BASE.
+  base: process.env.VITE_BASE ?? '/',
   plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: {

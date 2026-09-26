@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/auth-context';
+import { DEMO_CREDENCIAIS, DEMO_MODE } from '@/lib/demo-mode';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type LoginInput, loginSchema } from '@preca/shared';
 import { AlertCircle, Loader2, ShieldCheck, Sparkles, Workflow } from 'lucide-react';
@@ -19,7 +20,10 @@ export function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: DEMO_MODE ? DEMO_CREDENCIAIS : undefined,
+  });
 
   async function onSubmit(data: LoginInput) {
     setErro(null);
@@ -53,7 +57,7 @@ export function LoginPage() {
         </header>
 
         <div className="relative space-y-8 max-w-md">
-          <h1 className="text-4xl font-semibold tracking-tight leading-tight font-display text-balance">
+          <h1 className="text-4xl font-semibold tracking-tight leading-tight font-display text-balance text-primary-foreground">
             Do recebimento à escritura, todo o pipeline em um lugar.
           </h1>
 
@@ -69,7 +73,7 @@ export function LoginPage() {
         </div>
 
         <footer className="relative text-xs text-primary-foreground/60">
-          © {new Date().getFullYear()} Preca · sistema interno
+          © {new Date().getFullYear()} Preca · controle de precatórios
         </footer>
       </aside>
 
@@ -122,6 +126,14 @@ export function LoginPage() {
             </div>
           </div>
 
+          {DEMO_MODE && (
+            <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <strong className="font-medium">Demo pública.</strong> As credenciais já estão
+              preenchidas. Os dados são fictícios e ficam só no seu navegador (recarregar a página
+              reinicia tudo).
+            </div>
+          )}
+
           {erro && (
             <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -141,7 +153,7 @@ export function LoginPage() {
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Sistema interno · acesso restrito a usuários autorizados
+            Acesso restrito a usuários cadastrados
           </p>
         </form>
       </main>

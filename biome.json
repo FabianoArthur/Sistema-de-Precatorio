@@ -15,7 +15,9 @@
       "**/.turbo/**",
       "**/coverage/**",
       "**/*.generated.*",
-      "**/prisma/migrations/**"
+      "**/prisma/migrations/**",
+      "**/vite.config.js",
+      "**/vite.config.d.ts"
     ]
   },
   "formatter": {

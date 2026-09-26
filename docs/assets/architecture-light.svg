@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 540" width="920" height="540" role="img" aria-labelledby="title desc" lang="en">
+<title id="title">Architecture of the court-debt (precatório) pipeline</title>
+<desc id="desc">The React web app calls the NestJS API over REST with a JWT (1). The API writes each change and its audit-log entry to PostgreSQL in the same transaction (2). An uploaded court PDF goes to the OCR pipeline: pdf-parse first, Tesseract as fallback, then a parser for the federal court, TJSP or TJRJ (3). The extracted fields are stored next to the case (4). A scheduled SLA job finds cases stalled in a stage and creates notifications (5). The API answers the web app, which shows divergences between OCR and the record and the notification bell (6). Validation schemas and the scoring and buyer-matching rules live in a shared package used by both sides. In demo mode the web app swaps HTTP for an in-memory backend with fictitious data, which is what runs on GitHub Pages.</desc>
+<style>
+text{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1f2328}
+.b{font-size:15px;font-weight:600}
+.m{font-size:12.5px;fill:#59636e}
+.code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;fill:#6639ba}
+.lbl{font-size:12px;fill:#59636e;font-style:italic}
+.lg{font-size:12.5px;fill:#59636e}
+.bg{fill:#ffffff;stroke:#d0d7de}
+.card{fill:#f6f8fa;stroke:#d0d7de}
+.zona{fill:#eef2ff;stroke:#c7d2fe;stroke-dasharray:6 4}
+.zona+text{fill:#4338ca}
+.e{fill:none;stroke:#8c959f;stroke-width:1.6;stroke-linejoin:round}
+.tr{fill:none;stroke:#8c959f;stroke-width:1.3;stroke-dasharray:4 4}
+.hl{fill:none;stroke:#f97316;stroke-width:2.4;stroke-linejoin:round;opacity:0}
+.nb{fill:#4f46e5}
+.nt{font-size:11px;font-weight:700;fill:#ffffff}
+.dot{fill:#f97316;offset-rotate:0deg;opacity:0}
+.halo{fill:#f97316;opacity:.25}
+.p0{offset-path:path('M260,188 H345');animation:p0 12s linear infinite}
+.h0{animation:h0 12s linear infinite}
+.p1{offset-path:path('M575,188 H660');animation:p1 12s linear infinite}
+.h1{animation:h1 12s linear infinite}
+.p2{offset-path:path('M430,260 V340');animation:p2 12s linear infinite}
+.h2{animation:h2 12s linear infinite}
+.p3{offset-path:path('M575,372 H617 V236 H660');animation:p3 12s linear infinite}
+.h3{animation:h3 12s linear infinite}
+.p4{offset-path:path('M775,340 V260');animation:p4 12s linear infinite}
+.h4{animation:h4 12s linear infinite}
+.p5{offset-path:path('M345,226 H260');animation:p5 12s linear infinite}
+.h5{animation:h5 12s linear infinite}
+@keyframes p0{0%,4.00%{offset-distance:0%;opacity:0}5.50%{opacity:1}16.00%{offset-distance:100%;opacity:1}18.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h0{0%,4.00%{opacity:0}5.50%,16.00%{opacity:.9}20.00%,100%{opacity:0}}
+@keyframes p1{0%,19.00%{offset-distance:0%;opacity:0}20.50%{opacity:1}31.00%{offset-distance:100%;opacity:1}33.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h1{0%,19.00%{opacity:0}20.50%,31.00%{opacity:.9}35.00%,100%{opacity:0}}
+@keyframes p2{0%,34.00%{offset-distance:0%;opacity:0}35.50%{opacity:1}46.00%{offset-distance:100%;opacity:1}48.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h2{0%,34.00%{opacity:0}35.50%,46.00%{opacity:.9}50.00%,100%{opacity:0}}
+@keyframes p3{0%,49.00%{offset-distance:0%;opacity:0}50.50%{opacity:1}61.00%{offset-distance:100%;opacity:1}63.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h3{0%,49.00%{opacity:0}50.50%,61.00%{opacity:.9}65.00%,100%{opacity:0}}
+@keyframes p4{0%,64.00%{offset-distance:0%;opacity:0}65.50%{opacity:1}76.00%{offset-distance:100%;opacity:1}78.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h4{0%,64.00%{opacity:0}65.50%,76.00%{opacity:.9}80.00%,100%{opacity:0}}
+@keyframes p5{0%,79.00%{offset-distance:0%;opacity:0}80.50%{opacity:1}91.00%{offset-distance:100%;opacity:1}93.00%,100%{offset-distance:100%;opacity:0}}
+@keyframes h5{0%,79.00%{opacity:0}80.50%,91.00%{opacity:.9}95.00%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.hl{display:none}g.dot{animation:none;opacity:1;offset-distance:0%}}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#8c959f"/></marker></defs>
+<rect x="0.5" y="0.5" width="919" height="539" rx="16" class="bg"/>
+<rect x="345" y="22" width="230" height="78" rx="12" class="card"/>
+<text x="460" y="54" class="b" text-anchor="middle">packages/shared</text>
+<text x="460" y="78" class="m" text-anchor="middle">Zod schemas · score · buyer match</text>
+<rect x="30" y="150" width="230" height="110" rx="12" class="card"/>
+<text x="145" y="182" class="b" text-anchor="middle">Web app</text>
+<text x="145" y="206" class="m" text-anchor="middle">React · Vite · TanStack Query</text>
+<text x="145" y="228" class="code" text-anchor="middle">apps/web</text>
+<rect x="345" y="150" width="230" height="110" rx="12" class="card"/>
+<text x="460" y="182" class="b" text-anchor="middle">API</text>
+<text x="460" y="206" class="m" text-anchor="middle">NestJS · Prisma · JWT</text>
+<text x="460" y="228" class="code" text-anchor="middle">apps/api</text>
+<rect x="660" y="150" width="230" height="110" rx="12" class="card"/>
+<text x="775" y="182" class="b" text-anchor="middle">PostgreSQL</text>
+<text x="775" y="206" class="m" text-anchor="middle">cases · stage history</text>
+<text x="775" y="228" class="m" text-anchor="middle">audit log, same transaction</text>
+<rect x="345" y="340" width="230" height="96" rx="12" class="card"/>
+<text x="460" y="372" class="b" text-anchor="middle">OCR pipeline</text>
+<text x="460" y="396" class="m" text-anchor="middle">pdf-parse → Tesseract</text>
+<text x="460" y="418" class="m" text-anchor="middle">TRF · TJSP · TJRJ parsers</text>
+<rect x="660" y="340" width="230" height="96" rx="12" class="card"/>
+<text x="775" y="372" class="b" text-anchor="middle">SLA job</text>
+<text x="775" y="396" class="m" text-anchor="middle">daily cron</text>
+<text x="775" y="418" class="m" text-anchor="middle">stalled cases → alerts</text>
+<rect x="30" y="340" width="230" height="96" rx="12" class="zona"/>
+<text x="145" y="372" class="b" text-anchor="middle">Demo mode</text>
+<text x="145" y="396" class="m" text-anchor="middle">in-memory backend,</text>
+<text x="145" y="418" class="m" text-anchor="middle">fictitious data · Pages</text>
+<path d="M345,61 H145 V150" class="tr"/>
+<path d="M460,100 V150" class="tr"/>
+<text x="232" y="53" class="lbl" text-anchor="middle">same rules on both sides</text>
+<path d="M145,260 V340" class="tr" marker-end="url(#ah)"/>
+<text x="155" y="304" class="lbl">swaps HTTP for</text>
+<path d="M260,188 H345" class="e" marker-end="url(#ah)"/>
+<path d="M575,188 H660" class="e" marker-end="url(#ah)"/>
+<path d="M430,260 V340" class="e" marker-end="url(#ah)"/>
+<path d="M575,372 H617 V236 H660" class="e" marker-end="url(#ah)"/>
+<path d="M775,340 V260" class="e" marker-end="url(#ah)"/>
+<path d="M345,226 H260" class="e" marker-end="url(#ah)"/>
+<path d="M260,188 H345" class="hl h0"/>
+<path d="M575,188 H660" class="hl h1"/>
+<path d="M430,260 V340" class="hl h2"/>
+<path d="M575,372 H617 V236 H660" class="hl h3"/>
+<path d="M775,340 V260" class="hl h4"/>
+<path d="M345,226 H260" class="hl h5"/>
+<circle cx="302" cy="176" r="9" class="nb"/><text x="302" y="180" class="nt" text-anchor="middle">1</text>
+<circle cx="617" cy="176" r="9" class="nb"/><text x="617" y="180" class="nt" text-anchor="middle">2</text>
+<circle cx="418" cy="300" r="9" class="nb"/><text x="418" y="304" class="nt" text-anchor="middle">3</text>
+<circle cx="605" cy="300" r="9" class="nb"/><text x="605" y="304" class="nt" text-anchor="middle">4</text>
+<circle cx="787" cy="300" r="9" class="nb"/><text x="787" y="304" class="nt" text-anchor="middle">5</text>
+<circle cx="302" cy="242" r="9" class="nb"/><text x="302" y="246" class="nt" text-anchor="middle">6</text>
+<g class="dot p0"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<g class="dot p1"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<g class="dot p2"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<g class="dot p3"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<g class="dot p4"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<g class="dot p5"><circle r="9" class="halo"/><circle r="4.5"/></g>
+<circle cx="39" cy="474" r="9" class="nb"/><text x="39" y="478" class="nt" text-anchor="middle">1</text><text x="56" y="478" class="lg">request</text>
+<circle cx="325.6666666666667" cy="474" r="9" class="nb"/><text x="325.6666666666667" y="478" class="nt" text-anchor="middle">2</text><text x="342.6666666666667" y="478" class="lg">write + audit log</text>
+<circle cx="612.3333333333334" cy="474" r="9" class="nb"/><text x="612.3333333333334" y="478" class="nt" text-anchor="middle">3</text><text x="629.3333333333334" y="478" class="lg">court PDF → OCR</text>
+<circle cx="39" cy="500" r="9" class="nb"/><text x="39" y="504" class="nt" text-anchor="middle">4</text><text x="56" y="504" class="lg">extracted fields</text>
+<circle cx="325.6666666666667" cy="500" r="9" class="nb"/><text x="325.6666666666667" y="504" class="nt" text-anchor="middle">5</text><text x="342.6666666666667" y="504" class="lg">SLA scan</text>
+<circle cx="612.3333333333334" cy="500" r="9" class="nb"/><text x="612.3333333333334" y="504" class="nt" text-anchor="middle">6</text><text x="629.3333333333334" y="504" class="lg">answer, diff, bell</text>
+</svg>

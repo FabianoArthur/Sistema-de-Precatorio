@@ -1,44 +1,25 @@
-import { ScorePrecatorio } from '@preca/shared';
-import type { Comprador, Precatorio } from '@prisma/client';
-import { avaliarMatch } from './match';
+import { describe, expect, test } from 'vitest';
+import { NaturezaPrecatorio, ScorePrecatorio } from '../enums';
+import { type CompradorCriterios, type PrecatorioLocalizacao, avaliarMatch } from './match';
 
-type CompradorOverrides = Partial<
-  Pick<Comprador, 'aceitaFederal' | 'ufsAceitas' | 'municipiosAceitos' | 'scoresAceitos' | 'ativo'>
->;
-
-function makeComprador(o: CompradorOverrides = {}): Comprador {
+function makeComprador(o: Partial<CompradorCriterios> = {}): CompradorCriterios {
   return {
-    id: 'cmp-1',
-    nome: 'Comprador Teste',
-    cnpj: '00000000000000',
-    celular: '11999999999',
-    email: 'teste@example.com',
     aceitaFederal: false,
     ufsAceitas: [],
     municipiosAceitos: [],
     scoresAceitos: [],
-    ativo: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...o,
-  } as Comprador;
+  };
 }
 
-type PrecatorioOverrides = Partial<
-  Pick<Precatorio, 'devedorTipo' | 'devedorUf' | 'devedorMunicipio' | 'score'>
->;
-
-function makePrecatorio(
-  o: PrecatorioOverrides = {},
-): Pick<Precatorio, 'id' | 'devedorTipo' | 'devedorUf' | 'devedorMunicipio' | 'score'> {
+function makePrecatorio(o: Partial<PrecatorioLocalizacao> = {}): PrecatorioLocalizacao {
   return {
-    id: 'pct-1',
-    devedorTipo: 'FEDERAL',
+    devedorTipo: NaturezaPrecatorio.FEDERAL,
     devedorUf: null,
     devedorMunicipio: null,
     score: ScorePrecatorio.AAA,
     ...o,
-  } as Pick<Precatorio, 'id' | 'devedorTipo' | 'devedorUf' | 'devedorMunicipio' | 'score'>;
+  };
 }
 
 describe('avaliarMatch', () => {

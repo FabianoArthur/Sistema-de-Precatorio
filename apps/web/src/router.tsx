@@ -20,30 +20,36 @@ function ProtectedRoute() {
   return <Outlet />;
 }
 
-export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
+export const router = createBrowserRouter(
+  [
+    { path: '/login', element: <LoginPage /> },
+    {
+      element: <ProtectedRoute />,
+      children: [
+        {
+          element: <AppLayout />,
+          children: [
+            { path: '/', element: <DashboardPage /> },
+            { path: '/precatorios', element: <PrecatoriosListPage /> },
+            { path: '/precatorios/novo', element: <PrecatorioFormPage /> },
+            { path: '/precatorios/:id', element: <PrecatorioDetailPage /> },
+            { path: '/precatorios/:id/editar', element: <PrecatorioFormPage /> },
+            { path: '/parceiros', element: <ParceirosListPage /> },
+            { path: '/parceiros/novo', element: <ParceiroFormPage /> },
+            { path: '/parceiros/:id', element: <ParceiroFormPage /> },
+            { path: '/compradores', element: <CompradoresListPage /> },
+            { path: '/compradores/novo', element: <CompradorFormPage /> },
+            { path: '/compradores/:id', element: <CompradorFormPage /> },
+            { path: '/cedentes', element: <CedentesListPage /> },
+            { path: '/cedentes/novo', element: <CedenteFormPage /> },
+            { path: '/cedentes/:id', element: <CedenteFormPage /> },
+          ],
+        },
+      ],
+    },
+  ],
   {
-    element: <ProtectedRoute />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          { path: '/', element: <DashboardPage /> },
-          { path: '/precatorios', element: <PrecatoriosListPage /> },
-          { path: '/precatorios/novo', element: <PrecatorioFormPage /> },
-          { path: '/precatorios/:id', element: <PrecatorioDetailPage /> },
-          { path: '/precatorios/:id/editar', element: <PrecatorioFormPage /> },
-          { path: '/parceiros', element: <ParceirosListPage /> },
-          { path: '/parceiros/novo', element: <ParceiroFormPage /> },
-          { path: '/parceiros/:id', element: <ParceiroFormPage /> },
-          { path: '/compradores', element: <CompradoresListPage /> },
-          { path: '/compradores/novo', element: <CompradorFormPage /> },
-          { path: '/compradores/:id', element: <CompradorFormPage /> },
-          { path: '/cedentes', element: <CedentesListPage /> },
-          { path: '/cedentes/novo', element: <CedenteFormPage /> },
-          { path: '/cedentes/:id', element: <CedenteFormPage /> },
-        ],
-      },
-    ],
+    // No GitHub Pages o app mora em /<repo>/; em dev e no Docker, na raiz.
+    basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/',
   },
-]);
+);

@@ -1,12 +1,14 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { type APIRequestContext, type Page, expect, test } from '@playwright/test';
 
 const EMAIL = process.env.E2E_USER_EMAIL ?? 'admin@preca.local';
 const PASSWORD = process.env.E2E_USER_PASSWORD ?? 'admin123';
 const API_URL = process.env.PLAYWRIGHT_API_URL ?? 'http://localhost:3001';
 
-const PDF_PATH = path.join(__dirname, 'fixtures', 'sample.pdf');
-const TXT_PATH = path.join(__dirname, 'fixtures', 'sample.txt');
+const FIXTURES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
+const PDF_PATH = path.join(FIXTURES_DIR, 'sample.pdf');
+const TXT_PATH = path.join(FIXTURES_DIR, 'sample.txt');
 
 async function loginUI(page: Page) {
   await page.goto('/login');
@@ -89,11 +91,12 @@ test.describe('Anexos - upload golden path', () => {
     const row = page.getByRole('row', { name: /sample\.pdf/i });
     await expect(row).toBeVisible({ timeout: 10_000 });
 
-    // Status OCR inicial deve ser PROCESSANDO ou NAO_PROCESSADO (Processando.../Aguardando)
-    await expect(row.getByText(/processando|aguardando/i)).toBeVisible();
+    // O OCR roda em segundo plano: a linha mostra um status, e qual deles depende de quão
+    // rápido o OCR termina (o PDF de exemplo é uma página em branco, então pode já ter falhado)
+    await expect(row.getByText(/aguardando|processando|extra[íi]do|falhou/i)).toBeVisible();
   });
 
-  test('rejeita arquivo não-PDF com alerta', async ({ page }) => {
+  test('rejeita arquivo não-PDF com aviso', async ({ page }) => {
     await page.goto(`/precatorios/${precatorioId}`);
 
     await expect(page.getByRole('heading', { name: /E2E-ANX-/i })).toBeVisible({
@@ -103,17 +106,11 @@ test.describe('Anexos - upload golden path', () => {
     await page.getByRole('tab', { name: /anexos/i }).click();
     await expect(page.getByText(/arraste pdfs aqui/i)).toBeVisible();
 
-    // Captura o window.alert antes do upload
-    const dialogPromise = page.waitForEvent('dialog', { timeout: 5_000 });
-
     const fileInput = page.locator('input[type="file"][accept="application/pdf"]');
     await fileInput.setInputFiles(TXT_PATH);
 
-    const dialog = await dialogPromise;
-    expect(dialog.message()).toMatch(/n[ãa]o é pdf/i);
-    await dialog.dismiss();
-
-    // Garante que nenhuma linha de anexo foi adicionada à tabela
+    // A UploadZone recusa o arquivo com um toast (sonner), sem chamar a API
+    await expect(page.getByText(/sample\.txt.*n[ãa]o é pdf/i)).toBeVisible();
     await expect(page.getByRole('row', { name: /sample\.txt/i })).toHaveCount(0);
   });
 });

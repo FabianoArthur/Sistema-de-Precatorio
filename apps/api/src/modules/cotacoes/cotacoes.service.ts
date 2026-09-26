@@ -8,12 +8,12 @@ import {
   type MotivoMatch,
   StatusCotacao,
   TipoNotificacao,
+  avaliarMatch,
 } from '@preca/shared';
 import type { Comprador } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
-import { avaliarMatch } from './match';
 
 const ESTAGIOS_ANTES_COTACAO: EstagioPrecatorio[] = [
   EstagioPrecatorio.NOVOS_RECEBIMENTOS,

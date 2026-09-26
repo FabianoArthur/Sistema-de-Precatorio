@@ -1,3 +1,4 @@
+import { type NaturezaPrecatorio, SCORE_LABELS, type ScorePrecatorio } from '../enums';
 import {
   BLOQUEIO_TIPO,
   type BloqueioTipo,
@@ -5,14 +6,23 @@ import {
   type MotivoBloqueio,
   type MotivoMatch,
   type MotivoTipo,
-  SCORE_LABELS,
-} from '@preca/shared';
-import type { Comprador, Precatorio } from '@prisma/client';
+} from '../schemas/cotacao';
 
-type PrecatorioMatch = Pick<
-  Precatorio,
-  'id' | 'devedorTipo' | 'devedorUf' | 'devedorMunicipio' | 'score'
->;
+/** O que um comprador (banco/fundo) aceita. Estrutural: o model do Prisma encaixa direto. */
+export interface CompradorCriterios {
+  aceitaFederal: boolean;
+  ufsAceitas: readonly string[];
+  municipiosAceitos: readonly string[];
+  scoresAceitos: readonly ScorePrecatorio[];
+}
+
+/** Os campos do precatório que decidem o match. */
+export interface PrecatorioLocalizacao {
+  devedorTipo: NaturezaPrecatorio;
+  devedorUf: string | null;
+  devedorMunicipio: string | null;
+  score: ScorePrecatorio;
+}
 
 export interface ResultadoMatch {
   ok: true;
@@ -38,8 +48,8 @@ function bloqueio(tipo: BloqueioTipo, label: string, detalhe?: string): MotivoBl
 }
 
 export function avaliarMatch(
-  comprador: Comprador,
-  precatorio: PrecatorioMatch,
+  comprador: CompradorCriterios,
+  precatorio: PrecatorioLocalizacao,
 ): ResultadoMatch | ResultadoBloqueado {
   const motivos: MotivoMatch[] = [];
   const bloqueios: MotivoBloqueio[] = [];

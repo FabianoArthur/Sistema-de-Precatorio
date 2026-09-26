@@ -222,7 +222,7 @@ export function PrecatoriosListPage() {
                   <TableRow key={p.id} className="group">
                     <TableCell>
                       <Link
-                        className="font-medium text-foreground hover:text-primary transition-colors"
+                        className="font-medium whitespace-nowrap text-foreground hover:text-primary transition-colors"
                         to={`/precatorios/${p.id}`}
                       >
                         {label}

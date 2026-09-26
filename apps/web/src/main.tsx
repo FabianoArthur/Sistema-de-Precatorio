@@ -1,5 +1,7 @@
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { apiClient } from '@/lib/api-client';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import { queryClient } from '@/lib/query-client';
 import { Sentry, initSentry } from '@/lib/sentry';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -28,9 +30,18 @@ const Tree = (
   </React.StrictMode>
 );
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <Sentry.ErrorBoundary fallback={<FallbackErro />}>{Tree}</Sentry.ErrorBoundary>,
-);
+async function iniciar() {
+  // Precisa rodar antes do render: o AuthProvider chama /auth/me assim que monta.
+  if (DEMO_MODE) {
+    const { instalarDemo } = await import('./demo');
+    instalarDemo(apiClient);
+  }
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <Sentry.ErrorBoundary fallback={<FallbackErro />}>{Tree}</Sentry.ErrorBoundary>,
+  );
+}
+
+iniciar();
 
 function FallbackErro() {
   return (
